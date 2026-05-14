@@ -227,7 +227,7 @@
       <button onclick="handleAdmin()" style="width:100%;padding:10px;border-radius:8px;border:none;background:rgba(99,102,241,0.3);color:#a5b4fc;font-size:13px;font-weight:600;font-family:Georgia,serif;">
         Entrar como Admin
       </button>
-      <p style="color:#475569;font-size:11px;text-align:center;margin:8px 0 0;">Senha padrão: admin2024</p>
+      <p style="color:#475569;font-size:11px;text-align:center;margin:8px 0 0;"></p>
     </div>
 
   </div>
@@ -477,7 +477,7 @@ function toggleAdmin() {
 function handleAdmin() {
   const s = document.getElementById('inp-admin-senha').value;
   const err = document.getElementById('erro-admin');
-  if (s === 'admin2024') {
+  if (s === '140695') {
     err.classList.add('hidden');
     document.getElementById('inp-admin-senha').value = '';
     document.getElementById('painel-admin-login').classList.add('hidden');
