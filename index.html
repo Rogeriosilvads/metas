@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Painel de Metas</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: Georgia, serif;
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+      min-height: 100vh;
+      color: #f1f5f9;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px 16px;
+      background: rgba(15,23,42,0.6);
+      border: 1px solid rgba(99,102,241,0.3);
+      border-radius: 10px;
+      color: #f1f5f9;
+      font-size: 15px;
+      outline: none;
+      font-family: Georgia, serif;
+      transition: border-color 0.2s;
+    }
+    input:focus { border-color: rgba(99,102,241,0.6); }
+    input::placeholder { color: #475569; }
+
+    label {
+      color: #94a3b8;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      display: block;
+      margin-bottom: 8px;
+    }
+
+    button { cursor: pointer; font-family: Georgia, serif; }
+
+    .hidden { display: none !important; }
+
+    /* ── Animações ── */
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes shimmer {
+      0%   { background-position: -200% 0; }
+      100% { background-position:  200% 0; }
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Orbs de fundo ── */
+    .orbs {
+      position: fixed; inset: 0; overflow: hidden; pointer-events: none; z-index: 0;
+    }
+    .orb {
+      position: absolute; border-radius: 50%;
+      background: radial-gradient(circle, rgba(99,102,241,0.08) 0%, transparent 70%);
+      transform: translate(-50%, -50%);
+    }
+
+    /* ── Telas ── */
+    .tela {
+      position: relative; z-index: 1;
+      min-height: 100vh;
+      display: flex; align-items: center; justify-content: center;
+      padding: 20px;
+      animation: fadeIn 0.35s ease;
+    }
+    .tela-admin {
+      position: relative; z-index: 1;
+      min-height: 100vh;
+      padding: 24px;
+      animation: fadeIn 0.35s ease;
+    }
+
+    /* ── Cartão de login ── */
+    .card {
+      background: rgba(30,41,59,0.8);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(99,102,241,0.2);
+      border-radius: 20px;
+      padding: 32px;
+      box-shadow: 0 25px 60px rgba(0,0,0,0.4);
+    }
+
+    /* ── Botão primário ── */
+    .btn-primary {
+      width: 100%; padding: 14px;
+      border-radius: 10px; border: none;
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      color: white; font-size: 15px; font-weight: 700;
+      box-shadow: 0 4px 20px rgba(99,102,241,0.4);
+      letter-spacing: 0.5px;
+      transition: opacity 0.2s;
+    }
+    .btn-primary:hover { opacity: 0.9; }
+
+    /* ── Botão secundário ── */
+    .btn-sec {
+      background: rgba(99,102,241,0.15);
+      border: 1px solid rgba(99,102,241,0.3);
+      color: #a5b4fc; padding: 8px 16px;
+      border-radius: 8px; font-size: 12px; font-weight: 600;
+      transition: background 0.2s;
+    }
+    .btn-sec:hover { background: rgba(99,102,241,0.25); }
+
+    /* ── Shimmer ── */
+    .shimmer-line {
+      height: 13px; border-radius: 6px; margin-bottom: 9px;
+      background: linear-gradient(90deg,
+        rgba(167,139,250,0.07) 25%,
+        rgba(167,139,250,0.18) 50%,
+        rgba(167,139,250,0.07) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.4s infinite;
+    }
+
+    /* ── Spinner ── */
+    .spinner {
+      width: 14px; height: 14px; border-radius: 50%;
+      border: 2px solid rgba(167,139,250,0.25);
+      border-top-color: #a78bfa;
+      animation: spin 0.8s linear infinite;
+      margin-left: auto; flex-shrink: 0;
+    }
+
+    /* ── Tabela admin ── */
+    table { width: 100%; border-collapse: collapse; }
+    thead tr { background: rgba(15,23,42,0.5); }
+    th {
+      padding: 12px 16px; color: #64748b;
+      font-size: 11px; text-transform: uppercase;
+      letter-spacing: 1px; text-align: left;
+      font-weight: 600; white-space: nowrap;
+    }
+    tbody tr { border-top: 1px solid rgba(99,102,241,0.08); transition: background 0.15s; }
+    tbody tr:hover { background: rgba(99,102,241,0.05); }
+    td { padding: 12px 16px; font-size: 13px; }
+
+    code {
+      padding: 3px 8px; border-radius: 6px; font-size: 12px;
+    }
+    .code-login { background: rgba(99,102,241,0.15); color: #a5b4fc; }
+    .code-senha  { background: rgba(15,23,42,0.5);   color: #94a3b8; }
+
+    /* ── Badge status ── */
+    .badge { padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+
+    /* ── Upload zone ── */
+    .upload-zone {
+      background: rgba(30,41,59,0.8);
+      border: 2px dashed rgba(99,102,241,0.4);
+      border-radius: 20px; padding: 28px;
+      margin-bottom: 24px; text-align: center;
+    }
+    .btn-upload {
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      border: none; color: white; padding: 12px 28px;
+      border-radius: 10px; font-size: 14px; font-weight: 700;
+      box-shadow: 0 4px 20px rgba(99,102,241,0.4);
+      transition: opacity 0.2s;
+    }
+    .btn-upload:hover { opacity: 0.88; }
+  </style>
+</head>
+<body>
+
+<!-- ══ ORBS ══ -->
+<div class="orbs" id="orbs"></div>
+
+<!-- ══════════════════════════════════════════════════
+     TELA LOGIN
+══════════════════════════════════════════════════ -->
+<div id="tela-login" class="tela">
+  <div style="width:100%;max-width:400px;position:relative;">
+
+    <!-- Logo -->
+    <div style="text-align:center;margin-bottom:32px;">
+      <div style="width:72px;height:72px;border-radius:20px;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:inline-flex;align-items:center;justify-content:center;margin-bottom:16px;box-shadow:0 0 40px rgba(99,102,241,0.4);">
+        <span style="font-size:32px;">🎯</span>
+      </div>
+      <h1 style="color:#f1f5f9;font-size:26px;margin:0 0 6px;font-weight:700;letter-spacing:-0.5px;">Painel de Metas</h1>
+      <p style="color:#64748b;font-size:14px;">Acesse sua meta diária</p>
+    </div>
+
+    <!-- Card -->
+    <div class="card">
+      <div style="margin-bottom:20px;">
+        <label>Usuário</label>
+        <input id="inp-login" type="text" placeholder="Seu primeiro nome" />
+      </div>
+      <div style="margin-bottom:24px;">
+        <label>Senha</label>
+        <input id="inp-senha" type="password" placeholder="••••••••" />
+      </div>
+
+      <div id="erro-login" class="hidden" style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:8px;padding:10px 14px;margin-bottom:16px;color:#fca5a5;font-size:13px;"></div>
+
+      <button class="btn-primary" onclick="handleLogin()">Entrar</button>
+
+      <div style="margin-top:20px;padding:12px 14px;background:rgba(99,102,241,0.08);border-radius:8px;border:1px solid rgba(99,102,241,0.15);">
+        <p style="color:#94a3b8;font-size:11px;line-height:1.6;">
+          💡 <strong style="color:#a5b4fc;">Senha padrão:</strong> primeironome + últimonome + 123<br>
+          Ex: <em>Ana Paula Santos</em> → <em>anasantos123</em>
+        </p>
+      </div>
+    </div>
+
+    <!-- Acesso admin -->
+    <div style="text-align:center;margin-top:20px;">
+      <button onclick="toggleAdmin()" style="background:none;border:none;color:#475569;font-size:12px;text-decoration:underline;font-family:Georgia,serif;">
+        Acesso Administrador
+      </button>
+    </div>
+
+    <div id="painel-admin-login" class="hidden" style="margin-top:12px;background:rgba(30,41,59,0.9);border:1px solid rgba(99,102,241,0.2);border-radius:12px;padding:20px;">
+      <label>Senha do Administrador</label>
+      <input id="inp-admin-senha" type="password" placeholder="Senha do administrador" style="margin-bottom:10px;" />
+      <div id="erro-admin" class="hidden" style="color:#fca5a5;font-size:12px;margin:0 0 8px;"></div>
+      <button onclick="handleAdmin()" style="width:100%;padding:10px;border-radius:8px;border:none;background:rgba(99,102,241,0.3);color:#a5b4fc;font-size:13px;font-weight:600;font-family:Georgia,serif;">
+        Entrar como Admin
+      </button>
+      <p style="color:#475569;font-size:11px;text-align:center;margin:8px 0 0;">Senha padrão: admin2024</p>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     TELA PAINEL (USUÁRIO)
+══════════════════════════════════════════════════ -->
+<div id="tela-painel" class="tela hidden">
+  <div style="width:100%;max-width:460px;">
+
+    <!-- Header -->
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
+      <div>
+        <p id="painel-data" style="color:#64748b;font-size:12px;margin:0 0 2px;text-transform:uppercase;letter-spacing:1px;"></p>
+        <h2 style="color:#f1f5f9;font-size:18px;margin:0;font-weight:700;">Sua Meta Diária</h2>
+      </div>
+      <button class="btn-sec" onclick="sair()">Sair</button>
+    </div>
+
+    <!-- Card principal -->
+    <div class="card" style="margin-bottom:16px;">
+      <!-- Avatar + nome -->
+      <div style="display:flex;align-items:center;gap:16px;margin-bottom:32px;">
+        <div id="painel-avatar" style="width:60px;height:60px;border-radius:16px;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:800;color:white;box-shadow:0 4px 20px rgba(99,102,241,0.4);flex-shrink:0;"></div>
+        <div>
+          <p style="color:#94a3b8;font-size:11px;margin:0 0 3px;text-transform:uppercase;letter-spacing:1px;">Bem-vindo(a)</p>
+          <h3 id="painel-nome" style="color:#f1f5f9;font-size:16px;margin:0;font-weight:700;line-height:1.3;"></h3>
+        </div>
+      </div>
+
+      <!-- Meta -->
+      <div id="painel-meta-box" style="background:rgba(15,23,42,0.5);border-radius:16px;padding:32px 24px;text-align:center;">
+        <p style="color:#64748b;font-size:12px;margin:0 0 12px;text-transform:uppercase;letter-spacing:1px;">Meta do Dia</p>
+        <div id="painel-valor" style="font-size:48px;font-weight:800;letter-spacing:-2px;margin-bottom:12px;"></div>
+        <span id="painel-badge" class="badge" style="padding:5px 14px;font-size:12px;"></span>
+      </div>
+    </div>
+
+    <!-- Versículo -->
+    <div id="versiculo-card" style="background:linear-gradient(135deg,rgba(30,41,59,0.9),rgba(15,23,42,0.8));backdrop-filter:blur(20px);border:1px solid rgba(167,139,250,0.25);border-radius:20px;padding:24px;margin-bottom:16px;box-shadow:0 8px 32px rgba(0,0,0,0.3);position:relative;overflow:hidden;min-height:110px;">
+      <div style="position:absolute;top:-8px;left:16px;font-size:80px;color:rgba(167,139,250,0.10);font-family:Georgia,serif;line-height:1;pointer-events:none;user-select:none;">"</div>
+      <div style="position:relative;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
+          <span style="font-size:16px;">✝️</span>
+          <span style="color:#a78bfa;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;">Versículo do Dia</span>
+          <div id="versiculo-spinner" class="spinner"></div>
+        </div>
+        <div id="versiculo-shimmer">
+          <div class="shimmer-line" style="width:95%;animation-delay:0s;"></div>
+          <div class="shimmer-line" style="width:80%;animation-delay:0.1s;"></div>
+          <div class="shimmer-line" style="width:55%;animation-delay:0.2s;"></div>
+        </div>
+        <div id="versiculo-conteudo" class="hidden">
+          <p id="versiculo-texto" style="color:#e2e8f0;font-size:15px;line-height:1.75;margin:0 0 14px;font-style:italic;font-family:Georgia,serif;"></p>
+          <p id="versiculo-ref"   style="color:#a78bfa;font-size:12px;font-weight:700;margin:0;text-align:right;letter-spacing:0.5px;"></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Rodapé -->
+    <div style="background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.2);border-radius:12px;padding:16px;text-align:center;">
+      <p style="color:#94a3b8;font-size:13px;margin:0;">📌 Estes são seus dados exclusivos. Para dúvidas, fale com seu gestor.</p>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     TELA ADMIN
+══════════════════════════════════════════════════ -->
+<div id="tela-admin" class="tela-admin hidden">
+  <div style="max-width:900px;margin:0 auto;">
+
+    <!-- Header admin -->
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:28px;">
+      <div>
+        <h1 style="color:#f1f5f9;font-size:24px;margin:0 0 4px;font-weight:800;">🛠️ Painel Administrador</h1>
+        <p id="admin-contagem" style="color:#64748b;font-size:13px;margin:0;"></p>
+      </div>
+      <button class="btn-sec" style="padding:10px 20px;border-radius:10px;font-size:13px;" onclick="irLogin()">← Voltar ao Login</button>
+    </div>
+
+    <!-- Upload -->
+    <div class="upload-zone">
+      <div style="font-size:40px;margin-bottom:12px;">📊</div>
+      <h3 style="color:#f1f5f9;margin:0 0 8px;font-size:17px;">Atualizar Planilha</h3>
+      <p style="color:#64748b;font-size:13px;margin:0 0 20px;">
+        Envie um .xlsx com duas colunas: <strong style="color:#a5b4fc;">Nome</strong> e <strong style="color:#a5b4fc;">Meta</strong>
+      </p>
+      <input id="file-input" type="file" accept=".xlsx,.xls" style="display:none;" onchange="handleArquivo(event)" />
+      <button class="btn-upload" id="btn-upload" onclick="document.getElementById('file-input').click()">
+        📁 Selecionar Arquivo .xlsx
+      </button>
+    </div>
+
+    <!-- Tabela -->
+    <div style="background:rgba(30,41,59,0.8);border:1px solid rgba(99,102,241,0.2);border-radius:20px;overflow:hidden;">
+      <div style="padding:20px 24px;border-bottom:1px solid rgba(99,102,241,0.15);">
+        <h3 style="color:#f1f5f9;margin:0;font-size:15px;font-weight:700;">Lista de Usuários e Credenciais</h3>
+      </div>
+      <div style="overflow-x:auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>Nome</th>
+              <th>Login (1º Nome)</th>
+              <th>Senha</th>
+              <th>Meta</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="admin-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Nota -->
+    <div style="margin-top:16px;padding:14px 16px;background:rgba(99,102,241,0.08);border-radius:10px;border:1px solid rgba(99,102,241,0.2);">
+      <p style="color:#94a3b8;font-size:12px;margin:0;">
+        🔐 <strong style="color:#a5b4fc;">Senha padrão:</strong> primeira palavra + última palavra + 123.
+      </p>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════
+     SCRIPT
+══════════════════════════════════════════════════ -->
+<script>
+// ── Dados demo ──────────────────────────────────────────────────
+let usuarios = [
+  { nome: "ANA PAULA CHAVES SOARES",         meta: 2535.14 },
+  { nome: "CARLA LETICIA SILVA ANDRADE",      meta: 2648.30 },
+  { nome: "ELISANGELA SATURNINO",             meta: 3746.85 },
+  { nome: "Fagner Magalhaes Fontes",          meta:  171.87 },
+  { nome: "Felipe Pereira Amaral",            meta: 3424.36 },
+  { nome: "Géssica dos Santos Araújo",        meta:  564.33 },
+  { nome: "IASMIN DOS SANTOS",               meta:  -32.09 },
+  { nome: "Iraci Santana Santos",             meta: 2138.14 },
+  { nome: "LUCAS PINA DOS SANTOS",           meta: 1540.62 },
+  { nome: "MARIA ANA DE JESUS DOS SANTOS C", meta: 1888.24 },
+  { nome: "ROGERIO DOS SANTOS",              meta:   46.98 },
+  { nome: "ROSEMARY DE JESUS SANTOS C",      meta: 2500.02 },
+  { nome: "TATIANE SOUZA FERNANDES",         meta: 3239.78 },
+  { nome: "THAIS DE JESUS DOS SANTOS",       meta:  494.30 },
+  { nome: "YANNI SANTOS GOTARDO",            meta:  338.76 },
+];
+
+let usuarioLogado = null;
+const versiculoCache = {};
+
+// ── Orbs de fundo ───────────────────────────────────────────────
+(function() {
+  const sizes   = [300,400,350,500,320,450];
+  const tops    = [10, 60, 30, 70, 20, 80];
+  const lefts   = [20, 70, 50, 10, 80, 40];
+  const orbs = document.getElementById('orbs');
+  sizes.forEach((s, i) => {
+    const d = document.createElement('div');
+    d.className = 'orb';
+    d.style.cssText = `width:${s}px;height:${s}px;top:${tops[i]}%;left:${lefts[i]}%;`;
+    orbs.appendChild(d);
+  });
+})();
+
+// ── Utilitários ─────────────────────────────────────────────────
+function gerarSenha(nome) {
+  const p = nome.trim().split(/\s+/);
+  return `${p[0].toLowerCase()}${p[p.length-1].toLowerCase()}123`;
+}
+
+function getInitials(nome) {
+  return nome.trim().split(/\s+/).slice(0,2).map(p => p[0].toUpperCase()).join('');
+}
+
+function getStatus(meta) {
+  if (meta >= 3000) return { label:'Excelente', color:'#22c55e', bg:'#dcfce7' };
+  if (meta >= 2000) return { label:'Ótimo',     color:'#3b82f6', bg:'#dbeafe' };
+  if (meta >= 1000) return { label:'Bom',       color:'#f59e0b', bg:'#fef3c7' };
+  if (meta >= 0)    return { label:'Atenção',   color:'#f97316', bg:'#ffedd5' };
+  return                   { label:'Negativo',  color:'#ef4444', bg:'#fee2e2' };
+}
+
+function hashSeed(nome, data) {
+  const s = nome.toLowerCase().replace(/\s+/g,'') + data;
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+  return h;
+}
+
+function hoje() {
+  return new Date().toLocaleDateString('pt-BR', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+}
+function dataISO() {
+  return new Date().toISOString().slice(0,10);
+}
+
+// ── Navegação ───────────────────────────────────────────────────
+function mostrar(id) {
+  ['tela-login','tela-painel','tela-admin'].forEach(t => {
+    document.getElementById(t).classList.toggle('hidden', t !== id);
+  });
+}
+
+function irLogin() {
+  usuarioLogado = null;
+  document.getElementById('inp-login').value = '';
+  document.getElementById('inp-senha').value = '';
+  setErro('');
+  mostrar('tela-login');
+}
+
+function sair() { irLogin(); }
+
+// ── Login ────────────────────────────────────────────────────────
+function setErro(msg) {
+  const el = document.getElementById('erro-login');
+  if (msg) { el.textContent = '⚠️ ' + msg; el.classList.remove('hidden'); }
+  else      { el.classList.add('hidden'); }
+}
+
+function handleLogin() {
+  setErro('');
+  const login = document.getElementById('inp-login').value.trim().toLowerCase();
+  const senha = document.getElementById('inp-senha').value;
+  const u = usuarios.find(u => u.nome.trim().split(/\s+/)[0].toLowerCase() === login);
+  if (!u) { setErro('Usuário não encontrado.'); return; }
+  if (senha !== gerarSenha(u.nome)) { setErro('Senha incorreta.'); return; }
+  usuarioLogado = u;
+  abrirPainel();
+}
+
+document.getElementById('inp-login').addEventListener('keydown', e => { if (e.key === 'Enter') handleLogin(); });
+document.getElementById('inp-senha').addEventListener('keydown', e => { if (e.key === 'Enter') handleLogin(); });
+
+// ── Admin ────────────────────────────────────────────────────────
+function toggleAdmin() {
+  const p = document.getElementById('painel-admin-login');
+  p.classList.toggle('hidden');
+}
+
+function handleAdmin() {
+  const s = document.getElementById('inp-admin-senha').value;
+  const err = document.getElementById('erro-admin');
+  if (s === 'admin2024') {
+    err.classList.add('hidden');
+    document.getElementById('inp-admin-senha').value = '';
+    document.getElementById('painel-admin-login').classList.add('hidden');
+    abrirAdmin();
+  } else {
+    err.textContent = 'Senha incorreta.';
+    err.classList.remove('hidden');
+  }
+}
+
+document.getElementById('inp-admin-senha').addEventListener('keydown', e => { if (e.key === 'Enter') handleAdmin(); });
+
+// ── Painel usuário ───────────────────────────────────────────────
+function abrirPainel() {
+  const u  = usuarioLogado;
+  const st = getStatus(u.meta);
+  const fmt = u.meta.toLocaleString('pt-BR', { style:'currency', currency:'BRL' });
+
+  document.getElementById('painel-data').textContent   = hoje();
+  document.getElementById('painel-nome').textContent   = u.nome;
+  document.getElementById('painel-avatar').textContent = getInitials(u.nome);
+
+  const valorEl = document.getElementById('painel-valor');
+  valorEl.textContent = fmt;
+  valorEl.style.background = `linear-gradient(135deg, ${st.color}, ${st.color}aa)`;
+  valorEl.style.webkitBackgroundClip = 'text';
+  valorEl.style.webkitTextFillColor  = 'transparent';
+
+  const box = document.getElementById('painel-meta-box');
+  box.style.border = `1px solid ${st.color}30`;
+
+  const badge = document.getElementById('painel-badge');
+  badge.textContent       = st.label;
+  badge.style.background  = st.bg;
+  badge.style.color       = st.color;
+
+  mostrar('tela-painel');
+  carregarVersiculo(u.nome, dataISO());
+}
+
+// ── Versículo ────────────────────────────────────────────────────
+async function buscarVersiculoIA(nome, data) {
+  const key = `${nome}|${data}`;
+  if (versiculoCache[key]) return versiculoCache[key];
+
+  const semente = hashSeed(nome, data);
+  const primeiro = nome.trim().split(/\s+/)[0];
+
+  const prompt = `Você é um assistente cristão. Escolha UM versículo bíblico real para ${primeiro} no dia ${data}.
+
+Use a semente ${semente} para variar — sementes altas exploram livros menos comuns da Bíblia.
+O versículo deve ser motivador e encorajador para o dia de trabalho.
+Explore toda a Bíblia: Salmos, Provérbios, Isaías, Jeremias, Josué, Gênesis, Deuteronômio, João, Romanos, Efésios, Filipenses, Colossenses, Hebreus, Apocalipse, etc.
+NUNCA use Filipenses 4:13 ou João 3:16.
+
+Responda APENAS com JSON puro, sem markdown, sem texto extra:
+{"texto":"versículo completo aqui","ref":"Livro capítulo:versículo"}`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 300,
+        messages: [{ role: 'user', content: prompt }],
+      }),
+    });
+    const json = await res.json();
+    const raw   = (json.content || []).map(b => b.text || '').join('').trim();
+    const clean = raw.replace(/```json|```/g, '').trim();
+    const parsed = JSON.parse(clean);
+    if (parsed.texto && parsed.ref) {
+      versiculoCache[key] = parsed;
+      return parsed;
+    }
+  } catch (_) {}
+
+  return { texto: 'O Senhor é o meu pastor e nada me faltará.', ref: 'Salmos 23:1' };
+}
+
+async function carregarVersiculo(nome, data) {
+  // reset estado de carregamento
+  document.getElementById('versiculo-shimmer').classList.remove('hidden');
+  document.getElementById('versiculo-conteudo').classList.add('hidden');
+  document.getElementById('versiculo-spinner').classList.remove('hidden');
+
+  const v = await buscarVersiculoIA(nome, data);
+
+  document.getElementById('versiculo-texto').textContent = `"${v.texto}"`;
+  document.getElementById('versiculo-ref').textContent   = `— ${v.ref}`;
+
+  document.getElementById('versiculo-shimmer').classList.add('hidden');
+  document.getElementById('versiculo-conteudo').classList.remove('hidden');
+  document.getElementById('versiculo-spinner').classList.add('hidden');
+}
+
+// ── Admin – tabela ───────────────────────────────────────────────
+function abrirAdmin() {
+  document.getElementById('admin-contagem').textContent = `${usuarios.length} usuários cadastrados`;
+  renderTabela();
+  mostrar('tela-admin');
+}
+
+function renderTabela() {
+  const tbody = document.getElementById('admin-tbody');
+  tbody.innerHTML = '';
+  usuarios.forEach(u => {
+    const st  = getStatus(u.meta);
+    const fmt = u.meta.toLocaleString('pt-BR', { style:'currency', currency:'BRL' });
+    const login = u.nome.trim().split(/\s+/)[0].toLowerCase();
+    const senha = gerarSenha(u.nome);
+
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td style="color:#f1f5f9;font-weight:600;">${u.nome}</td>
+      <td><code class="code-login">${login}</code></td>
+      <td><code class="code-senha">${senha}</code></td>
+      <td style="font-weight:800;color:${st.color};">${fmt}</td>
+      <td><span class="badge" style="background:${st.bg};color:${st.color};">${st.label}</span></td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+// ── Upload XLSX ──────────────────────────────────────────────────
+function handleArquivo(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const btn = document.getElementById('btn-upload');
+  btn.textContent = 'Carregando...';
+  btn.disabled = true;
+
+  const reader = new FileReader();
+  reader.onload = (evt) => {
+    try {
+      const wb   = XLSX.read(evt.target.result, { type: 'binary' });
+      const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1 });
+      const novos = rows
+        .filter(r => r[0] && r[1] !== undefined)
+        .map(r => ({ nome: String(r[0]).trim(), meta: parseFloat(r[1]) || 0 }));
+
+      if (novos.length > 0) {
+        usuarios = novos;
+        document.getElementById('admin-contagem').textContent = `${usuarios.length} usuários cadastrados`;
+        renderTabela();
+        alert(`✅ ${novos.length} usuários carregados!`);
+      } else {
+        alert('Nenhum dado encontrado.');
+      }
+    } catch (_) {
+      alert('Erro ao ler o arquivo.');
+    }
+    btn.textContent = '📁 Selecionar Arquivo .xlsx';
+    btn.disabled = false;
+    e.target.value = '';
+  };
+  reader.readAsBinaryString(file);
+}
+</script>
+</body>
+</html>
