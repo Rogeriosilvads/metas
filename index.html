@@ -354,21 +354,21 @@
 <script>
 // ── Dados (importados da planilha vendas.xlsx) ─────────────────────
 var usuarios = [
-  { nome: "ANA PAULA CHAVES SOARES",         vendasBrutas: 56967.92,  deducoes: 18940.85, resultado: 38027.07, Meta Diária: 2535.14, senha: "7382" },
-  { nome: "CARLA LETICIA SILVA ANDRADE",      vendasBrutas: 56157.77,  deducoes: 16433.26, resultado: 39724.51, meta: 2648.30, senha: "4951" },
-  { nome: "ELISANGELA SATURNINO",             vendasBrutas: 103963.94, deducoes: 47761.20, resultado: 56202.74, meta: 3746.85, senha: "2847" },
-  { nome: "Fagner Magalhaes Fontes",          vendasBrutas: 5187.31,   deducoes: 2609.19,  resultado: 2578.12,  meta:  171.87, senha: "6134" },
-  { nome: "Felipe Pereira Amaral",            vendasBrutas: 51633.77,  deducoes: 268.31,   resultado: 51365.46, meta: 3424.36, senha: "9463" },
-  { nome: "Géssica dos Santos Araújo",        vendasBrutas: 13559.11,  deducoes: 5094.17,  resultado: 8464.94,  meta:  564.33, senha: "3718" },
-  { nome: "IASMIN DOS SANTOS",               vendasBrutas: 6867.53,   deducoes: 7348.81,  resultado:  -481.28, meta:  -32.09, senha: "5290" },
-  { nome: "Iraci Santana Santos",             vendasBrutas: 51666.53,  deducoes: 19594.48, resultado: 32072.05, meta: 2138.14, senha: "8641" },
-  { nome: "LUCAS PINA DOS SANTOS",           vendasBrutas: 44551.26,  deducoes: 21441.99, resultado: 23109.27, meta: 1540.62, senha: "1075" },
-  { nome: "MARIA ANA DE JESUS DOS SANTOS C", vendasBrutas: 50013.68,  deducoes: 21690.15, resultado: 28323.53, meta: 1888.24, senha: "4823" },
-  { nome: "ROGERIO DOS SANTOS",              vendasBrutas: 3062.95,   deducoes: 2358.32,  resultado:   704.63, meta:   46.98, senha: "7156" },
-  { nome: "ROSEMARY DE JESUS SANTOS C",      vendasBrutas: 72250.28,  deducoes: 34750.05, resultado: 37500.23, meta: 2500.02, senha: "3947" },
-  { nome: "TATIANE SOUZA FERNANDES",         vendasBrutas: 88545.97,  deducoes: 39949.32, resultado: 48596.65, meta: 3239.78, senha: "6512" },
-  { nome: "THAIS DE JESUS DOS SANTOS",       vendasBrutas: 11215.94,  deducoes: 3801.44,  resultado:  7414.50, meta:  494.30, senha: "2384" },
-  { nome: "YANNI SANTOS GOTARDO",            vendasBrutas: 9508.06,   deducoes: 4426.59,  resultado:  5081.47, meta:  338.76, senha: "8061" },
+  { nome: "ANA PAULA CHAVES SOARES",         MetaMensal: 56967.92,  Vendido: 18940.85, resultado: 38027.07, MetaDiária: 2535.14, senha: "7382" },
+  { nome: "CARLA LETICIA SILVA ANDRADE",      MetaMensal: 56157.77,  Vendido: 16433.26, resultado: 39724.51, MetaDiária: 2648.30, senha: "4951" },
+  { nome: "ELISANGELA SATURNINO",             MetaMensal: 103963.94, Vendido: 47761.20, resultado: 56202.74, MetaDiária: 3746.85, senha: "2847" },
+  { nome: "Fagner Magalhaes Fontes",          MetaMensal: 5187.31,   Vendido: 2609.19,  resultado: 2578.12,  MetaDiária:  171.87, senha: "6134" },
+  { nome: "Felipe Pereira Amaral",            MetaMensal: 51633.77,  Vendido: 268.31,   resultado: 51365.46, MetaDiária: 3424.36, senha: "9463" },
+  { nome: "Géssica dos Santos Araújo",        MetaMensal: 13559.11,  Vendido: 5094.17,  resultado: 8464.94,  MetaDiária:  564.33, senha: "3718" },
+  { nome: "IASMIN DOS SANTOS",               MetaMensal: 6867.53,   Vendido: 7348.81,  resultado:  -481.28, MetaDiária:  -32.09, senha: "5290" },
+  { nome: "Iraci Santana Santos",             MetaMensal: 51666.53,  Vendido: 19594.48, resultado: 32072.05, MetaDiária: 2138.14, senha: "8641" },
+  { nome: "LUCAS PINA DOS SANTOS",           MetaMensal: 44551.26,  Vendido: 21441.99, resultado: 23109.27, MetaDiária: 1540.62, senha: "1075" },
+  { nome: "MARIA ANA DE JESUS DOS SANTOS C", MetaMensal: 50013.68,  Vendido: 21690.15, resultado: 28323.53, MetaDiária: 1888.24, senha: "4823" },
+  { nome: "ROGERIO DOS SANTOS",              MetaMensal: 3062.95,   Vendido: 2358.32,  resultado:   704.63, MetaDiária:   46.98, senha: "7156" },
+  { nome: "ROSEMARY DE JESUS SANTOS C",      MetaMensal: 72250.28,  Vendido: 34750.05, resultado: 37500.23, MetaDiária: 2500.02, senha: "3947" },
+  { nome: "TATIANE SOUZA FERNANDES",         MetaMensal: 88545.97,  Vendido: 39949.32, resultado: 48596.65, MetaDiária: 3239.78, senha: "6512" },
+  { nome: "THAIS DE JESUS DOS SANTOS",       MetaMensal: 11215.94,  Vendido: 3801.44,  resultado:  7414.50, MetaDiária:  494.30, senha: "2384" },
+  { nome: "YANNI SANTOS GOTARDO",            MetaMensal: 9508.06,   Vendido: 4426.59,  resultado:  5081.47, MetaDiária:  338.76, senha: "8061" },
 ];
 
 var SENHA_ADMIN = "140695";
