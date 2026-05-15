@@ -290,6 +290,137 @@
       <p style="color:#94a3b8;font-size:13px;margin:0;">📌 Estes são seus dados exclusivos. Para dúvidas, fale com seu gestor.</p>
     </div>
 
+    <button onclick="abrirDicas()" style="width:100%;margin-top:12px;padding:14px;border-radius:12px;border:none;background:linear-gradient(135deg,#f59e0b,#f97316);color:white;font-size:14px;font-weight:700;font-family:Georgia,serif;box-shadow:0 4px 20px rgba(245,158,11,0.35);letter-spacing:0.3px;cursor:pointer;">
+      💡 Dicas de como aumentar o ticket médio
+    </button>
+
+  </div>
+</div>
+
+<!-- MODAL DICAS -->
+<div id="modal-dicas" style="display:none;position:fixed;inset:0;z-index:999;background:rgba(0,0,0,0.75);backdrop-filter:blur(6px);overflow-y:auto;padding:20px;">
+  <div style="max-width:500px;margin:0 auto;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;padding-top:10px;">
+      <div>
+        <h2 style="color:#f1f5f9;font-size:20px;margin:0 0 4px;font-weight:800;">💡 Aumentar Ticket Médio</h2>
+        <p style="color:#64748b;font-size:13px;margin:0;">Técnicas práticas para vender mais</p>
+      </div>
+      <button onclick="fecharDicas()" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);color:#94a3b8;width:36px;height:36px;border-radius:10px;font-size:18px;cursor:pointer;font-family:Georgia,serif;">✕</button>
+    </div>
+
+    <div style="background:rgba(30,41,59,0.95);border:1px solid rgba(99,102,241,0.25);border-radius:16px;padding:22px;margin-bottom:14px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;"><span style="font-size:26px;">🔗</span><h3 style="color:#a5b4fc;font-size:15px;margin:0;font-weight:800;">Venda Complementar Automática</h3></div>
+      <p style="color:#94a3b8;font-size:12px;margin:0 0 12px;">Sempre conecte um produto ao outro:</p>
+      <div style="display:flex;flex-direction:column;gap:7px;">
+        <div style="background:rgba(99,102,241,0.1);border-radius:8px;padding:8px 12px;font-size:12px;color:#e2e8f0;">💊 Dor → <span style="color:#a5b4fc;font-weight:700;">vitamina B12 / magnésio</span></div>
+        <div style="background:rgba(99,102,241,0.1);border-radius:8px;padding:8px 12px;font-size:12px;color:#e2e8f0;">💊 Antibiótico → <span style="color:#a5b4fc;font-weight:700;">probiótico</span></div>
+        <div style="background:rgba(99,102,241,0.1);border-radius:8px;padding:8px 12px;font-size:12px;color:#e2e8f0;">☀️ Protetor solar → <span style="color:#a5b4fc;font-weight:700;">hidratante facial</span></div>
+        <div style="background:rgba(99,102,241,0.1);border-radius:8px;padding:8px 12px;font-size:12px;color:#e2e8f0;">💆 Shampoo antiqueda → <span style="color:#a5b4fc;font-weight:700;">vitamina cabelo</span></div>
+        <div style="background:rgba(99,102,241,0.1);border-radius:8px;padding:8px 12px;font-size:12px;color:#e2e8f0;">🍼 Fralda → <span style="color:#a5b4fc;font-weight:700;">lenço umedecido</span></div>
+      </div>
+      <div style="margin-top:14px;padding:12px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:10px;">
+        <p style="color:#fca5a5;font-size:11px;margin:0 0 4px;font-weight:700;">❌ Nunca perguntar:</p>
+        <p style="color:#94a3b8;font-size:12px;margin:0 0 8px;font-style:italic;">"Quer levar mais alguma coisa?"</p>
+        <p style="color:#34d399;font-size:11px;margin:0 0 4px;font-weight:700;">✅ Melhor dizer:</p>
+        <p style="color:#e2e8f0;font-size:12px;margin:0;font-style:italic;">"Esse aqui costuma funcionar melhor junto com esse."</p>
+      </div>
+    </div>
+
+    <div style="background:rgba(30,41,59,0.95);border:1px solid rgba(245,158,11,0.25);border-radius:16px;padding:22px;margin-bottom:14px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;"><span style="font-size:26px;">🗣️</span><h3 style="color:#fbbf24;font-size:15px;margin:0;font-weight:800;">Frases que Vendem Mais</h3></div>
+      <p style="color:#94a3b8;font-size:12px;margin:0 0 12px;">Use essas frases no balcão:</p>
+      <div style="display:flex;flex-direction:column;gap:7px;">
+        <div style="background:rgba(245,158,11,0.1);border-left:3px solid #f59e0b;border-radius:0 8px 8px 0;padding:8px 12px;font-size:12px;color:#e2e8f0;font-style:italic;">"Esse está saindo bastante."</div>
+        <div style="background:rgba(245,158,11,0.1);border-left:3px solid #f59e0b;border-radius:0 8px 8px 0;padding:8px 12px;font-size:12px;color:#e2e8f0;font-style:italic;">"Esse tem resultado mais rápido."</div>
+        <div style="background:rgba(245,158,11,0.1);border-left:3px solid #f59e0b;border-radius:0 8px 8px 0;padding:8px 12px;font-size:12px;color:#e2e8f0;font-style:italic;">"Esse compensa mais pelo custo-benefício."</div>
+        <div style="background:rgba(245,158,11,0.1);border-left:3px solid #f59e0b;border-radius:0 8px 8px 0;padding:8px 12px;font-size:12px;color:#e2e8f0;font-style:italic;">"Esse o pessoal está gostando muito."</div>
+        <div style="background:rgba(245,158,11,0.1);border-left:3px solid #f59e0b;border-radius:0 8px 8px 0;padding:8px 12px;font-size:12px;color:#e2e8f0;font-style:italic;">"Posso te mostrar uma opção melhor?"</div>
+        <div style="background:rgba(245,158,11,0.1);border-left:3px solid #f59e0b;border-radius:0 8px 8px 0;padding:8px 12px;font-size:12px;color:#e2e8f0;font-style:italic;">"Esse aqui evita você gastar duas vezes."</div>
+      </div>
+    </div>
+
+    <div style="background:rgba(30,41,59,0.95);border:1px solid rgba(34,197,94,0.25);border-radius:16px;padding:22px;margin-bottom:14px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;"><span style="font-size:26px;">🏆</span><h3 style="color:#4ade80;font-size:15px;margin:0;font-weight:800;">Posicionamento da Equipe</h3></div>
+      <p style="color:#94a3b8;font-size:12px;margin:0 0 12px;">O atendente que mais vende:</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;">
+        <div style="background:rgba(34,197,94,0.1);border-radius:8px;padding:8px 12px;font-size:12px;color:#e2e8f0;text-align:center;">👁️ Olha no olho</div>
+        <div style="background:rgba(34,197,94,0.1);border-radius:8px;padding:8px 12px;font-size:12px;color:#e2e8f0;text-align:center;">⚡ Fala com energia</div>
+        <div style="background:rgba(34,197,94,0.1);border-radius:8px;padding:8px 12px;font-size:12px;color:#e2e8f0;text-align:center;">📦 Mostra o produto</div>
+        <div style="background:rgba(34,197,94,0.1);border-radius:8px;padding:8px 12px;font-size:12px;color:#e2e8f0;text-align:center;">🎯 Sugere sem insistir</div>
+        <div style="background:rgba(34,197,94,0.1);border-radius:8px;padding:8px 12px;font-size:12px;color:#e2e8f0;text-align:center;">⚡ Resolve rápido</div>
+        <div style="background:rgba(34,197,94,0.1);border-radius:8px;padding:8px 12px;font-size:12px;color:#e2e8f0;text-align:center;">📚 Conhece produtos</div>
+      </div>
+    </div>
+
+    <div style="background:rgba(30,41,59,0.95);border:1px solid rgba(251,191,36,0.25);border-radius:16px;padding:22px;margin-bottom:14px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;"><span style="font-size:26px;">💰</span><h3 style="color:#fbbf24;font-size:15px;margin:0;font-weight:800;">Produtos de Alta Margem</h3></div>
+      <p style="color:#94a3b8;font-size:12px;margin:0 0 12px;">Foque nesses produtos:</p>
+      <div style="display:flex;flex-wrap:wrap;gap:7px;">
+        <span style="background:rgba(251,191,36,0.15);border:1px solid rgba(251,191,36,0.3);color:#fbbf24;padding:5px 12px;border-radius:20px;font-size:11px;font-weight:700;">💊 Vitaminas</span>
+        <span style="background:rgba(251,191,36,0.15);border:1px solid rgba(251,191,36,0.3);color:#fbbf24;padding:5px 12px;border-radius:20px;font-size:11px;font-weight:700;">💪 Suplementos</span>
+        <span style="background:rgba(251,191,36,0.15);border:1px solid rgba(251,191,36,0.3);color:#fbbf24;padding:5px 12px;border-radius:20px;font-size:11px;font-weight:700;">✨ Cosméticos</span>
+        <span style="background:rgba(251,191,36,0.15);border:1px solid rgba(251,191,36,0.3);color:#fbbf24;padding:5px 12px;border-radius:20px;font-size:11px;font-weight:700;">🧴 Dermocosméticos</span>
+        <span style="background:rgba(251,191,36,0.15);border:1px solid rgba(251,191,36,0.3);color:#fbbf24;padding:5px 12px;border-radius:20px;font-size:11px;font-weight:700;">🌿 Produtos naturais</span>
+        <span style="background:rgba(251,191,36,0.15);border:1px solid rgba(251,191,36,0.3);color:#fbbf24;padding:5px 12px;border-radius:20px;font-size:11px;font-weight:700;">👶 Infantil</span>
+        <span style="background:rgba(251,191,36,0.15);border:1px solid rgba(251,191,36,0.3);color:#fbbf24;padding:5px 12px;border-radius:20px;font-size:11px;font-weight:700;">😴 Sono</span>
+        <span style="background:rgba(251,191,36,0.15);border:1px solid rgba(251,191,36,0.3);color:#fbbf24;padding:5px 12px;border-radius:20px;font-size:11px;font-weight:700;">⚖️ Emagrecimento</span>
+        <span style="background:rgba(251,191,36,0.15);border:1px solid rgba(251,191,36,0.3);color:#fbbf24;padding:5px 12px;border-radius:20px;font-size:11px;font-weight:700;">🥤 Proteína</span>
+      </div>
+    </div>
+
+    <div style="background:rgba(30,41,59,0.95);border:1px solid rgba(239,68,68,0.25);border-radius:16px;padding:22px;margin-bottom:14px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;"><span style="font-size:26px;">⚠️</span><h3 style="color:#f87171;font-size:15px;margin:0;font-weight:800;">Erros que Fazem Perder Venda</h3></div>
+      <div style="display:flex;flex-direction:column;gap:7px;">
+        <div style="background:rgba(239,68,68,0.08);border-radius:8px;padding:8px 12px;font-size:12px;color:#fca5a5;">❌ Balcão poluído</div>
+        <div style="background:rgba(239,68,68,0.08);border-radius:8px;padding:8px 12px;font-size:12px;color:#fca5a5;">❌ Produtos escondidos / preço sem destaque</div>
+        <div style="background:rgba(239,68,68,0.08);border-radius:8px;padding:8px 12px;font-size:12px;color:#fca5a5;">❌ Funcionário parado / fila lenta</div>
+        <div style="background:rgba(239,68,68,0.08);border-radius:8px;padding:8px 12px;font-size:12px;color:#fca5a5;">❌ Cliente esperando sem atenção</div>
+        <div style="background:rgba(239,68,68,0.08);border-radius:8px;padding:8px 12px;font-size:12px;color:#fca5a5;">❌ Falar técnico demais</div>
+        <div style="background:rgba(239,68,68,0.08);border-radius:8px;padding:8px 12px;font-size:12px;color:#fca5a5;">❌ Não oferecer complemento</div>
+      </div>
+    </div>
+
+    <div style="background:rgba(30,41,59,0.95);border:1px solid rgba(99,102,241,0.35);border-radius:16px;padding:22px;margin-bottom:14px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;"><span style="font-size:26px;">⏱️</span><h3 style="color:#a5b4fc;font-size:15px;margin:0;font-weight:800;">Regra dos 3 Segundos</h3></div>
+      <p style="color:#94a3b8;font-size:12px;margin:0 0 14px;">O cliente precisa entender em até 3 segundos:</p>
+      <div style="display:flex;flex-direction:column;gap:7px;margin-bottom:14px;">
+        <div style="background:rgba(99,102,241,0.15);border-radius:8px;padding:10px 14px;font-size:13px;color:#e2e8f0;display:flex;align-items:center;gap:10px;"><span style="font-size:18px;">1️⃣</span> O que é o produto</div>
+        <div style="background:rgba(99,102,241,0.15);border-radius:8px;padding:10px 14px;font-size:13px;color:#e2e8f0;display:flex;align-items:center;gap:10px;"><span style="font-size:18px;">2️⃣</span> Qual o benefício</div>
+        <div style="background:rgba(99,102,241,0.15);border-radius:8px;padding:10px 14px;font-size:13px;color:#e2e8f0;display:flex;align-items:center;gap:10px;"><span style="font-size:18px;">3️⃣</span> Qual o preço</div>
+      </div>
+      <div style="background:rgba(239,68,68,0.1);border-radius:8px;padding:10px 14px;text-align:center;">
+        <p style="color:#fca5a5;font-size:12px;margin:0;font-weight:700;">Se ele precisar pensar demais → a venda cai!</p>
+      </div>
+    </div>
+
+    <div style="background:rgba(30,41,59,0.95);border:1px solid rgba(167,139,250,0.25);border-radius:16px;padding:22px;margin-bottom:14px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;"><span style="font-size:26px;">🪧</span><h3 style="color:#c4b5fd;font-size:15px;margin:0;font-weight:800;">Cartazes que Aumentam Saída</h3></div>
+      <p style="color:#94a3b8;font-size:12px;margin:0 0 12px;">Use frases assim nos cartazes:</p>
+      <div style="display:flex;flex-direction:column;gap:7px;">
+        <div style="background:rgba(167,139,250,0.1);border-radius:8px;padding:8px 12px;font-size:12px;color:#e2e8f0;font-weight:600;">🔥 "Os mais vendidos da semana"</div>
+        <div style="background:rgba(167,139,250,0.1);border-radius:8px;padding:8px 12px;font-size:12px;color:#e2e8f0;font-weight:600;">💪 "Fortaleça sua imunidade"</div>
+        <div style="background:rgba(167,139,250,0.1);border-radius:8px;padding:8px 12px;font-size:12px;color:#e2e8f0;font-weight:600;">🛍️ "Leve 2 e economize"</div>
+        <div style="background:rgba(167,139,250,0.1);border-radius:8px;padding:8px 12px;font-size:12px;color:#e2e8f0;font-weight:600;">✅ "Indicação da equipe"</div>
+        <div style="background:rgba(167,139,250,0.1);border-radius:8px;padding:8px 12px;font-size:12px;color:#e2e8f0;font-weight:600;">⚡ "Resultado rápido"</div>
+        <div style="background:rgba(167,139,250,0.1);border-radius:8px;padding:8px 12px;font-size:12px;color:#e2e8f0;font-weight:600;">📦 "Kit economia"</div>
+      </div>
+    </div>
+
+    <div style="background:linear-gradient(135deg,rgba(245,158,11,0.15),rgba(249,115,22,0.15));border:1px solid rgba(249,115,22,0.4);border-radius:16px;padding:22px;margin-bottom:14px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;"><span style="font-size:26px;">📦</span><h3 style="color:#fb923c;font-size:15px;margin:0;font-weight:800;">Kit Pronto — Técnica Poderosa</h3></div>
+      <p style="color:#94a3b8;font-size:12px;margin:0 0 12px;">Cliente compra mais rápido quando já está combinado:</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;">
+        <div style="background:rgba(249,115,22,0.15);border-radius:8px;padding:8px 12px;font-size:12px;color:#fed7aa;text-align:center;font-weight:700;">🤧 Kit Gripe</div>
+        <div style="background:rgba(249,115,22,0.15);border-radius:8px;padding:8px 12px;font-size:12px;color:#fed7aa;text-align:center;font-weight:700;">🏋️ Kit Academia</div>
+        <div style="background:rgba(249,115,22,0.15);border-radius:8px;padding:8px 12px;font-size:12px;color:#fed7aa;text-align:center;font-weight:700;">🛡️ Kit Imunidade</div>
+        <div style="background:rgba(249,115,22,0.15);border-radius:8px;padding:8px 12px;font-size:12px;color:#fed7aa;text-align:center;font-weight:700;">👶 Kit Infantil</div>
+        <div style="background:rgba(249,115,22,0.15);border-radius:8px;padding:8px 12px;font-size:12px;color:#fed7aa;text-align:center;font-weight:700;">✨ Kit Pele</div>
+        <div style="background:rgba(249,115,22,0.15);border-radius:8px;padding:8px 12px;font-size:12px;color:#fed7aa;text-align:center;font-weight:700;">💆 Kit Cabelo</div>
+      </div>
+    </div>
+
+    <button onclick="fecharDicas()" style="width:100%;padding:14px;border-radius:12px;border:1px solid rgba(99,102,241,0.3);background:rgba(99,102,241,0.2);color:#a5b4fc;font-size:14px;font-weight:700;font-family:Georgia,serif;cursor:pointer;margin-bottom:20px;">Fechar</button>
+
   </div>
 </div>
 
@@ -449,6 +580,21 @@ function irLogin() {
 }
 
 function sair() { irLogin(); }
+
+// ── Modal Dicas ───────────────────────────────────────────────────
+function abrirDicas() {
+  document.getElementById('modal-dicas').style.display = 'block';
+  document.body.style.overflow = 'hidden';
+}
+function fecharDicas() {
+  document.getElementById('modal-dicas').style.display = 'none';
+  document.body.style.overflow = '';
+}
+// Fechar clicando fora
+document.addEventListener('click', function(e) {
+  var modal = document.getElementById('modal-dicas');
+  if (e.target === modal) fecharDicas();
+});
 
 // ── Login ─────────────────────────────────────────────────────────
 function setErro(msg) {
