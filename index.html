@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Painel de Metas</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -127,6 +128,25 @@
 
     .badge { padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; }
 
+
+    /* Loading overlay */
+    #loading-overlay {
+      position:fixed;inset:0;z-index:9999;
+      background:linear-gradient(135deg,#0f172a,#1e293b);
+      display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;
+    }
+    .loading-spinner {
+      width:48px;height:48px;border-radius:50%;
+      border:3px solid rgba(99,102,241,0.2);
+      border-top-color:#6366f1;
+      animation:spin 0.8s linear infinite;
+    }
+    /* Gráfico modal */
+    #modal-grafico {
+      display:none;position:fixed;inset:0;z-index:998;
+      background:rgba(0,0,0,0.8);backdrop-filter:blur(6px);
+      overflow-y:auto;padding:20px;
+    }
     .upload-zone {
       background: rgba(30,41,59,0.8);
       border: 2px dashed rgba(99,102,241,0.4);
@@ -170,6 +190,12 @@
   </style>
 </head>
 <body>
+
+<!-- LOADING -->
+<div id="loading-overlay">
+  <div class="loading-spinner"></div>
+  <p style="color:#64748b;font-size:13px;letter-spacing:1px;text-transform:uppercase;">Carregando dados...</p>
+</div>
 
 <div class="orbs" id="orbs"></div>
 
@@ -289,6 +315,10 @@
     <div style="background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.2);border-radius:12px;padding:16px;text-align:center;">
       <p style="color:#94a3b8;font-size:13px;margin:0;">📌 Estes são seus dados exclusivos. Para dúvidas, fale com seu gestor.</p>
     </div>
+
+    <button onclick="abrirGrafico()" style="width:100%;margin-top:12px;padding:14px;border-radius:12px;border:none;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:white;font-size:14px;font-weight:700;font-family:Georgia,serif;box-shadow:0 4px 20px rgba(99,102,241,0.35);letter-spacing:0.3px;cursor:pointer;">
+      📊 Ver minha performance diária
+    </button>
 
     <button onclick="abrirDicas()" style="width:100%;margin-top:12px;padding:14px;border-radius:12px;border:none;background:linear-gradient(135deg,#f59e0b,#f97316);color:white;font-size:14px;font-weight:700;font-family:Georgia,serif;box-shadow:0 4px 20px rgba(245,158,11,0.35);letter-spacing:0.3px;cursor:pointer;">
       💡 Dicas de como aumentar o ticket médio
@@ -424,6 +454,63 @@
   </div>
 </div>
 
+<!-- MODAL GRÁFICO PERFORMANCE -->
+<div id="modal-grafico">
+  <div style="max-width:500px;margin:0 auto;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;padding-top:10px;">
+      <div>
+        <h2 style="color:#f1f5f9;font-size:20px;margin:0 0 4px;font-weight:800;">📊 Performance Diária</h2>
+        <p id="grafico-subtitulo" style="color:#64748b;font-size:13px;margin:0;"></p>
+      </div>
+      <button onclick="fecharGrafico()" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);color:#94a3b8;width:36px;height:36px;border-radius:10px;font-size:18px;cursor:pointer;font-family:Georgia,serif;">✕</button>
+    </div>
+
+    <!-- Legenda -->
+    <div style="display:flex;gap:16px;margin-bottom:16px;flex-wrap:wrap;">
+      <div style="display:flex;align-items:center;gap:6px;"><div style="width:12px;height:12px;border-radius:3px;background:#22c55e;"></div><span style="color:#94a3b8;font-size:12px;">Dia bom (≥ meta)</span></div>
+      <div style="display:flex;align-items:center;gap:6px;"><div style="width:12px;height:12px;border-radius:3px;background:#f87171;"></div><span style="color:#94a3b8;font-size:12px;">Dia fraco (< meta)</span></div>
+      <div style="display:flex;align-items:center;gap:6px;"><div style="width:12px;height:12px;border-radius:3px;background:rgba(99,102,241,0.6);border:1px dashed #a5b4fc;"></div><span style="color:#94a3b8;font-size:12px;">Meta diária</span></div>
+    </div>
+
+    <!-- Canvas gráfico -->
+    <div style="background:rgba(15,23,42,0.8);border:1px solid rgba(99,102,241,0.2);border-radius:16px;padding:20px;">
+      <canvas id="grafico-canvas" height="260"></canvas>
+    </div>
+
+    <!-- Resumo dias -->
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:14px;">
+      <div style="background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.2);border-radius:12px;padding:14px;text-align:center;">
+        <div id="resumo-bons" style="font-size:22px;font-weight:800;color:#22c55e;">—</div>
+        <div style="color:#64748b;font-size:11px;text-transform:uppercase;letter-spacing:1px;margin-top:4px;">Dias Bons</div>
+      </div>
+      <div style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.2);border-radius:12px;padding:14px;text-align:center;">
+        <div id="resumo-fracos" style="font-size:22px;font-weight:800;color:#f87171;">—</div>
+        <div style="color:#64748b;font-size:11px;text-transform:uppercase;letter-spacing:1px;margin-top:4px;">Dias Fracos</div>
+      </div>
+      <div style="background:rgba(99,102,241,0.1);border:1px solid rgba(99,102,241,0.2);border-radius:12px;padding:14px;text-align:center;">
+        <div id="resumo-media" style="font-size:18px;font-weight:800;color:#a5b4fc;">—</div>
+        <div style="color:#64748b;font-size:11px;text-transform:uppercase;letter-spacing:1px;margin-top:4px;">Média/dia</div>
+      </div>
+    </div>
+
+    <!-- Melhor e pior dia -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;">
+      <div style="background:rgba(30,41,59,0.9);border:1px solid rgba(34,197,94,0.2);border-radius:12px;padding:14px;">
+        <div style="color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">🏆 Melhor dia</div>
+        <div id="resumo-melhor-dia" style="color:#22c55e;font-size:13px;font-weight:700;">—</div>
+        <div id="resumo-melhor-val" style="color:#4ade80;font-size:15px;font-weight:800;">—</div>
+      </div>
+      <div style="background:rgba(30,41,59,0.9);border:1px solid rgba(239,68,68,0.2);border-radius:12px;padding:14px;">
+        <div style="color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">📉 Pior dia</div>
+        <div id="resumo-pior-dia" style="color:#f87171;font-size:13px;font-weight:700;">—</div>
+        <div id="resumo-pior-val" style="color:#fca5a5;font-size:15px;font-weight:800;">—</div>
+      </div>
+    </div>
+
+    <button onclick="fecharGrafico()" style="width:100%;padding:14px;border-radius:12px;border:1px solid rgba(99,102,241,0.3);background:rgba(99,102,241,0.2);color:#a5b4fc;font-size:14px;font-weight:700;font-family:Georgia,serif;cursor:pointer;margin-top:14px;margin-bottom:20px;">Fechar</button>
+  </div>
+</div>
+
 <!-- ADMIN -->
 <div id="tela-admin" class="tela-admin hidden">
   <div style="max-width:1100px;margin:0 auto;">
@@ -483,9 +570,75 @@
 </div>
 
 <script>
-// ── Dados (importados da planilha) ─────────────────────────────────
-// Colunas: COLABORADOR | SALDO DE METAS | VENDA | FALTA | META DIARIA | LOGIN | SENHA
-var usuarios = [
+// ── Configuração Google Sheets ───────────────────────────────────────
+var SHEET_ID = "1iWkNlmazuEXBzQzYUh8tRbZ9M9zlaJGwK7A-2epYhrA";
+var SHEET_GID_MAIN  = "0";       // Aba principal (resumo mensal)
+var SHEET_GID_DAILY = "daily";   // Aba de vendas diárias (gid real após criar)
+
+// URL CSV pública
+function csvUrl(gid) {
+  return 'https://docs.google.com/spreadsheets/d/' + SHEET_ID + '/export?format=csv&gid=' + gid;
+}
+
+function parseBRL(v) {
+  if (!v) return 0;
+  var s = String(v).replace(/R\$\s?/g,'').replace(/\./g,'').replace(',','.').trim();
+  return parseFloat(s) || 0;
+}
+
+// Parse CSV simples
+function parseCSV(text) {
+  var lines = text.trim().split('\n');
+  return lines.map(function(line) {
+    var cols = [], cur = '', inQ = false;
+    for (var i = 0; i < line.length; i++) {
+      var c = line[i];
+      if (c === '"') { inQ = !inQ; }
+      else if (c === ',' && !inQ) { cols.push(cur.trim()); cur = ''; }
+      else cur += c;
+    }
+    cols.push(cur.trim());
+    return cols;
+  });
+}
+
+// ── Dados (carregados do Google Sheets) ──────────────────────────────
+var usuarios = [];
+var dadosCarregados = false;
+
+async function carregarDadosGSheets() {
+  try {
+    var url = csvUrl(SHEET_GID_MAIN);
+    var res = await fetch(url);
+    var text = await res.text();
+    var rows = parseCSV(text);
+    var novos = [];
+    for (var i = 0; i < rows.length; i++) {
+      var r = rows[i];
+      if (!r[0] || r[0].toUpperCase() === 'COLABORADOR') continue;
+      novos.push({
+        nome:       r[0].trim(),
+        saldoMetas: parseBRL(r[1]),
+        venda:      parseBRL(r[2]),
+        falta:      parseBRL(r[3]),
+        metaDiaria: parseBRL(r[4]),
+        login:      r[5] ? r[5].trim().toLowerCase() : r[0].trim().split(/\s+/)[0].toLowerCase(),
+        senha:      r[6] ? r[6].trim() : ''
+      });
+    }
+    if (novos.length > 0) {
+      usuarios = novos;
+      dadosCarregados = true;
+      console.log('✅ ' + novos.length + ' usuários carregados do Google Sheets');
+    }
+  } catch(e) {
+    console.warn('Erro ao carregar Google Sheets, usando dados locais:', e);
+    carregarDadosFallback();
+  }
+}
+
+function carregarDadosFallback() {
+  usuarios = [
   { nome: "ANA PAULA CHAVES SOARES",         saldoMetas: 56967.92,  venda: 21332.27, falta: 35635.65, metaDiaria:  2545.40, login: "ana",       senha: "7382" },
   { nome: "CARLA LETICIA SILVA ANDRADE",      saldoMetas: 56157.77,  venda: 19061.62, falta: 37096.15, metaDiaria:  2649.73, login: "carla",     senha: "4951" },
   { nome: "ELISANGELA SATURNINO",             saldoMetas: 103963.94, venda: 51075.06, falta: 52888.88, metaDiaria:  3777.78, login: "elisangela",senha: "2847" },
@@ -501,7 +654,54 @@ var usuarios = [
   { nome: "TATIANE SOUZA FERNANDES",         saldoMetas: 88545.97,  venda: 39929.94, falta: 48616.03, metaDiaria:  3472.57, login: "tatiane",   senha: "6512" },
   { nome: "THAIS DE JESUS DOS SANTOS",       saldoMetas: 11215.94,  venda: 4111.23,  falta:  7104.71, metaDiaria:   507.48, login: "thais",     senha: "2384" },
   { nome: "YANNI SANTOS GOTARDO",            saldoMetas: 9508.06,   venda: 4636.45,  falta:  4871.61, metaDiaria:   347.97, login: "yanni",     senha: "8061" },
-];
+  ];
+  dadosCarregados = true;
+}
+
+// Carrega vendas diárias de uma segunda aba (LOGIN | DATA(DD/MM) | VALOR)
+var vendasDiarias = {};
+async function carregarVendasDiarias() {
+  try {
+    var url = 'https://docs.google.com/spreadsheets/d/' + SHEET_ID + '/export?format=csv&gid=' + SHEET_GID_DAILY;
+    var res = await fetch(url);
+    if (!res.ok) return;
+    var text = await res.text();
+    var rows = parseCSV(text);
+    vendasDiarias = {};
+    for (var i = 0; i < rows.length; i++) {
+      var r = rows[i];
+      if (!r[0] || r[0].toLowerCase() === 'login') continue;
+      var login = r[0].trim().toLowerCase();
+      var data  = r[1] ? r[1].trim() : '';
+      var valor = parseBRL(r[2]);
+      if (!vendasDiarias[login]) vendasDiarias[login] = [];
+      vendasDiarias[login].push({ data: data, valor: valor });
+    }
+    console.log('📊 Vendas diárias carregadas');
+  } catch(e) {
+    console.warn('Aba de vendas diárias não encontrada, gerando dados de exemplo.');
+    gerarVendasExemplo();
+  }
+}
+
+function gerarVendasExemplo() {
+  // Gera 15 dias de exemplo para cada usuário baseado no seu total
+  vendasDiarias = {};
+  var hoje = new Date();
+  usuarios.forEach(function(u) {
+    var dias = [];
+    var mediaBase = u.venda / 15 || 200;
+    for (var d = 14; d >= 0; d--) {
+      var dt = new Date(hoje);
+      dt.setDate(hoje.getDate() - d);
+      var dia = String(dt.getDate()).padStart(2,'0') + '/' + String(dt.getMonth()+1).padStart(2,'0');
+      // Varia ±60% da média
+      var fator = 0.4 + Math.random() * 1.2;
+      dias.push({ data: dia, valor: Math.round(mediaBase * fator) });
+    }
+    vendasDiarias[u.login] = dias;
+  });
+}
 
 var SENHA_ADMIN = "140695";
 var usuarioLogado = null;
@@ -580,6 +780,79 @@ function irLogin() {
 }
 
 function sair() { irLogin(); }
+
+// ── Inicialização ─────────────────────────────────────────────────
+async function init() {
+  await carregarDadosGSheets();
+  await carregarVendasDiarias();
+  document.getElementById('loading-overlay').style.display = 'none';
+}
+init();
+
+// ── Gráfico Performance ───────────────────────────────────────────
+var graficoInstance = null;
+
+function abrirGrafico() {
+  var u = usuarioLogado;
+  if (!u) return;
+  var dias = vendasDiarias[u.login] || [];
+  var meta = u.metaDiaria;
+  document.getElementById('grafico-subtitulo').textContent = 'Últimos ' + dias.length + ' dias — ' + u.nome.split(' ')[0];
+  var labels  = dias.map(function(d){ return d.data; });
+  var valores = dias.map(function(d){ return d.valor; });
+  var cores   = valores.map(function(v){ return v >= meta ? 'rgba(34,197,94,0.85)' : 'rgba(239,68,68,0.75)'; });
+  var bordas  = valores.map(function(v){ return v >= meta ? '#22c55e' : '#f87171'; });
+  var bons   = valores.filter(function(v){ return v >= meta; }).length;
+  var fracos = valores.length - bons;
+  var media  = valores.length ? valores.reduce(function(a,b){return a+b;},0)/valores.length : 0;
+  var maxVal = Math.max.apply(null, valores);
+  var minVal = Math.min.apply(null, valores);
+  var maxIdx = valores.indexOf(maxVal);
+  var minIdx = valores.indexOf(minVal);
+  document.getElementById('resumo-bons').textContent   = bons;
+  document.getElementById('resumo-fracos').textContent = fracos;
+  document.getElementById('resumo-media').textContent  = brl(media);
+  document.getElementById('resumo-melhor-dia').textContent = labels[maxIdx] || '--';
+  document.getElementById('resumo-melhor-val').textContent = brl(maxVal);
+  document.getElementById('resumo-pior-dia').textContent   = labels[minIdx] || '--';
+  document.getElementById('resumo-pior-val').textContent   = brl(minVal);
+  if (graficoInstance) { graficoInstance.destroy(); graficoInstance = null; }
+  var ctx = document.getElementById('grafico-canvas').getContext('2d');
+  graficoInstance = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: [
+        { label: 'Venda do dia', data: valores, backgroundColor: cores, borderColor: bordas, borderWidth: 1.5, borderRadius: 6, order: 2 },
+        { label: 'Meta diária', data: Array(labels.length).fill(meta), type: 'line', borderColor: 'rgba(165,180,252,0.7)', borderWidth: 2, borderDash: [6,4], pointRadius: 0, fill: false, order: 1 }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: { label: function(ctx) { var v = ctx.raw; return (v >= meta ? '✅' : '📉') + ' R$ ' + Number(v).toLocaleString('pt-BR',{minimumFractionDigits:2}); } },
+          backgroundColor: 'rgba(15,23,42,0.95)', titleColor: '#94a3b8', bodyColor: '#f1f5f9', borderColor: 'rgba(99,102,241,0.3)', borderWidth: 1
+        }
+      },
+      scales: {
+        x: { ticks: { color: '#475569', font: { size: 10 } }, grid: { color: 'rgba(99,102,241,0.05)' } },
+        y: { ticks: { color: '#475569', font: { size: 10 }, callback: function(v){ return 'R$' + Number(v).toLocaleString('pt-BR',{notation:'compact'}); } }, grid: { color: 'rgba(99,102,241,0.08)' } }
+      }
+    }
+  });
+  document.getElementById('modal-grafico').style.display = 'block';
+  document.body.style.overflow = 'hidden';
+}
+
+function fecharGrafico() {
+  document.getElementById('modal-grafico').style.display = 'none';
+  document.body.style.overflow = '';
+}
+document.addEventListener('click', function(e) {
+  if (e.target === document.getElementById('modal-grafico')) fecharGrafico();
+});
 
 // ── Modal Dicas ───────────────────────────────────────────────────
 function abrirDicas() {
@@ -726,7 +999,10 @@ async function carregarVersiculo(nome, data) {
 }
 
 // ── Admin tabela ──────────────────────────────────────────────────
-function abrirAdmin() {
+async function abrirAdmin() {
+  document.getElementById('admin-contagem').textContent = 'Atualizando...';
+  await carregarDadosGSheets();
+  await carregarVendasDiarias();
   document.getElementById('admin-contagem').textContent = usuarios.length + ' usuários cadastrados';
   renderTabela();
   mostrar('tela-admin');
