@@ -4,93 +4,185 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Painel de Metas</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: Georgia, serif; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); min-height: 100vh; color: #f1f5f9; }
-    input { width: 100%; padding: 12px 16px; background: rgba(15,23,42,0.6); border: 1px solid rgba(99,102,241,0.3); border-radius: 10px; color: #f1f5f9; font-size: 15px; outline: none; font-family: Georgia, serif; transition: border-color 0.2s; }
+
+    body {
+      font-family: Georgia, serif;
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+      min-height: 100vh;
+      color: #f1f5f9;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px 16px;
+      background: rgba(15,23,42,0.6);
+      border: 1px solid rgba(99,102,241,0.3);
+      border-radius: 10px;
+      color: #f1f5f9;
+      font-size: 15px;
+      outline: none;
+      font-family: Georgia, serif;
+      transition: border-color 0.2s;
+    }
     input:focus { border-color: rgba(99,102,241,0.6); }
     input::placeholder { color: #475569; }
-    label { color: #94a3b8; font-size: 12px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; display: block; margin-bottom: 8px; }
+
+    label {
+      color: #94a3b8;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      display: block;
+      margin-bottom: 8px;
+    }
+
     button { cursor: pointer; font-family: Georgia, serif; }
     .hidden { display: none !important; }
-    @keyframes spin    { to { transform: rotate(360deg); } }
-    @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
-    @keyframes fadeIn  { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
-    @keyframes pulse   { 0%,100% { box-shadow: 0 0 40px rgba(99,102,241,0.4); } 50% { box-shadow: 0 0 80px rgba(99,102,241,0.7); } }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes shimmer {
+      0%   { background-position: -200% 0; }
+      100% { background-position:  200% 0; }
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
     .orbs { position: fixed; inset: 0; overflow: hidden; pointer-events: none; z-index: 0; }
     .orb  { position: absolute; border-radius: 50%; background: radial-gradient(circle, rgba(99,102,241,0.08) 0%, transparent 70%); transform: translate(-50%, -50%); }
-    .tela       { position: relative; z-index: 1; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; animation: fadeIn 0.35s ease; }
-    .tela-admin { position: relative; z-index: 1; min-height: 100vh; padding: 24px; animation: fadeIn 0.35s ease; }
-    .card { background: rgba(30,41,59,0.8); backdrop-filter: blur(20px); border: 1px solid rgba(99,102,241,0.2); border-radius: 20px; padding: 32px; box-shadow: 0 25px 60px rgba(0,0,0,0.4); }
-    .btn-primary { width: 100%; padding: 14px; border-radius: 10px; border: none; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; font-size: 15px; font-weight: 700; box-shadow: 0 4px 20px rgba(99,102,241,0.4); letter-spacing: 0.5px; transition: opacity 0.2s; }
+
+    .tela {
+      position: relative; z-index: 1;
+      min-height: 100vh;
+      display: flex; align-items: center; justify-content: center;
+      padding: 20px;
+      animation: fadeIn 0.35s ease;
+    }
+    .tela-admin {
+      position: relative; z-index: 1;
+      min-height: 100vh;
+      padding: 24px;
+      animation: fadeIn 0.35s ease;
+    }
+
+    .card {
+      background: rgba(30,41,59,0.8);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(99,102,241,0.2);
+      border-radius: 20px;
+      padding: 32px;
+      box-shadow: 0 25px 60px rgba(0,0,0,0.4);
+    }
+
+    .btn-primary {
+      width: 100%; padding: 14px;
+      border-radius: 10px; border: none;
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      color: white; font-size: 15px; font-weight: 700;
+      box-shadow: 0 4px 20px rgba(99,102,241,0.4);
+      letter-spacing: 0.5px;
+      transition: opacity 0.2s;
+    }
     .btn-primary:hover { opacity: 0.9; }
-    .btn-sec { background: rgba(99,102,241,0.15); border: 1px solid rgba(99,102,241,0.3); color: #a5b4fc; padding: 8px 16px; border-radius: 8px; font-size: 12px; font-weight: 600; transition: background 0.2s; }
+
+    .btn-sec {
+      background: rgba(99,102,241,0.15);
+      border: 1px solid rgba(99,102,241,0.3);
+      color: #a5b4fc; padding: 8px 16px;
+      border-radius: 8px; font-size: 12px; font-weight: 600;
+      transition: background 0.2s;
+    }
     .btn-sec:hover { background: rgba(99,102,241,0.25); }
-    .btn-danger { background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.3); color: #fca5a5; padding: 8px 16px; border-radius: 8px; font-size: 12px; font-weight: 600; transition: background 0.2s; }
-    .btn-danger:hover { background: rgba(239,68,68,0.25); }
-    .shimmer-line { height: 13px; border-radius: 6px; margin-bottom: 9px; background: linear-gradient(90deg, rgba(167,139,250,0.07) 25%, rgba(167,139,250,0.18) 50%, rgba(167,139,250,0.07) 75%); background-size: 200% 100%; animation: shimmer 1.4s infinite; }
-    .spinner { width: 14px; height: 14px; border-radius: 50%; border: 2px solid rgba(167,139,250,0.25); border-top-color: #a78bfa; animation: spin 0.8s linear infinite; margin-left: auto; flex-shrink: 0; }
+
+    .shimmer-line {
+      height: 13px; border-radius: 6px; margin-bottom: 9px;
+      background: linear-gradient(90deg, rgba(167,139,250,0.07) 25%, rgba(167,139,250,0.18) 50%, rgba(167,139,250,0.07) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.4s infinite;
+    }
+
+    .spinner {
+      width: 14px; height: 14px; border-radius: 50%;
+      border: 2px solid rgba(167,139,250,0.25);
+      border-top-color: #a78bfa;
+      animation: spin 0.8s linear infinite;
+      margin-left: auto; flex-shrink: 0;
+    }
+
     table { width: 100%; border-collapse: collapse; }
     thead tr { background: rgba(15,23,42,0.5); }
     th { padding: 12px 16px; color: #64748b; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; text-align: left; font-weight: 600; white-space: nowrap; }
     tbody tr { border-top: 1px solid rgba(99,102,241,0.08); transition: background 0.15s; }
     tbody tr:hover { background: rgba(99,102,241,0.05); }
     td { padding: 12px 16px; font-size: 13px; }
+
     code { padding: 3px 8px; border-radius: 6px; font-size: 12px; }
     .code-login { background: rgba(99,102,241,0.15); color: #a5b4fc; }
-    .code-senha  { background: rgba(15,23,42,0.5); color: #94a3b8; }
+    .code-senha  { background: rgba(15,23,42,0.5);   color: #94a3b8; }
+
     .badge { padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; }
-    .metricas-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 16px; }
-    .metrica-card  { background: rgba(15,23,42,0.5); border-radius: 12px; padding: 14px 16px; border: 1px solid rgba(99,102,241,0.1); }
-    .metrica-label { color: #64748b; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
-    .metrica-valor { font-size: 15px; font-weight: 700; color: #f1f5f9; }
-    #tela-loading { position: fixed; inset: 0; z-index: 100; background: linear-gradient(135deg, #0f172a, #1e293b); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; }
-    .loading-logo { width: 80px; height: 80px; border-radius: 24px; background: linear-gradient(135deg, #6366f1, #8b5cf6); display: flex; align-items: center; justify-content: center; font-size: 36px; animation: pulse 1.5s ease-in-out infinite; }
-    .sync-bar { display: flex; align-items: center; gap: 10px; background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.25); border-radius: 10px; padding: 10px 16px; margin-bottom: 16px; font-size: 13px; }
-    .sync-bar.aviso { background: rgba(245,158,11,0.1); border-color: rgba(245,158,11,0.25); }
-    .sync-bar.erro  { background: rgba(239,68,68,0.1); border-color: rgba(239,68,68,0.25); }
-    .sync-dot { width: 8px; height: 8px; border-radius: 50%; background: #22c55e; flex-shrink: 0; }
-    .sync-dot.aviso { background: #f59e0b; }
-    .sync-dot.erro  { background: #ef4444; }
-    .sheets-config { background: rgba(15,23,42,0.6); border: 1px solid rgba(99,102,241,0.2); border-radius: 16px; padding: 24px; margin-bottom: 24px; }
-    .fonte-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; }
-    .fonte-live   { background: rgba(34,197,94,0.15);  color: #4ade80; border: 1px solid rgba(34,197,94,0.3); }
-    .fonte-cache  { background: rgba(245,158,11,0.15); color: #fbbf24; border: 1px solid rgba(245,158,11,0.3); }
-    .fonte-fixed  { background: rgba(239,68,68,0.15);  color: #f87171; border: 1px solid rgba(239,68,68,0.3); }
-    details summary { color: #a5b4fc; font-size: 12px; cursor: pointer; font-weight: 600; list-style: none; }
+
+    .upload-zone {
+      background: rgba(30,41,59,0.8);
+      border: 2px dashed rgba(99,102,241,0.4);
+      border-radius: 20px; padding: 28px;
+      margin-bottom: 24px; text-align: center;
+    }
+    .btn-upload {
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      border: none; color: white; padding: 12px 28px;
+      border-radius: 10px; font-size: 14px; font-weight: 700;
+      box-shadow: 0 4px 20px rgba(99,102,241,0.4);
+      transition: opacity 0.2s;
+    }
+    .btn-upload:hover { opacity: 0.88; }
+
+    /* Cards de métricas no painel do usuário */
+    .metricas-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 16px;
+    }
+    .metrica-card {
+      background: rgba(15,23,42,0.5);
+      border-radius: 12px;
+      padding: 14px 16px;
+      border: 1px solid rgba(99,102,241,0.1);
+    }
+    .metrica-label {
+      color: #64748b;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 6px;
+    }
+    .metrica-valor {
+      font-size: 15px;
+      font-weight: 700;
+      color: #f1f5f9;
+    }
   </style>
 </head>
 <body>
 
 <div class="orbs" id="orbs"></div>
 
-<!-- LOADING -->
-<div id="tela-loading">
-  <div class="loading-logo">🎯</div>
-  <div style="text-align:center;">
-    <p style="color:#f1f5f9;font-size:18px;font-weight:700;margin-bottom:8px;">Painel de Metas</p>
-    <p id="loading-msg" style="color:#64748b;font-size:13px;">Conectando ao Google Sheets...</p>
-  </div>
-  <div style="display:flex;align-items:center;gap:8px;">
-    <div class="spinner" style="width:18px;height:18px;border-width:2px;"></div>
-    <span style="color:#94a3b8;font-size:12px;">Buscando dados atualizados</span>
-  </div>
-</div>
-
 <!-- LOGIN -->
-<div id="tela-login" class="tela hidden">
-  <div style="width:100%;max-width:400px;">
+<div id="tela-login" class="tela">
+  <div style="width:100%;max-width:400px;position:relative;">
+
     <div style="text-align:center;margin-bottom:32px;">
       <div style="width:72px;height:72px;border-radius:20px;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:inline-flex;align-items:center;justify-content:center;margin-bottom:16px;box-shadow:0 0 40px rgba(99,102,241,0.4);">
         <span style="font-size:32px;">🎯</span>
       </div>
-      <h1 style="color:#f1f5f9;font-size:26px;margin:0 0 6px;font-weight:700;">Painel de Metas</h1>
+      <h1 style="color:#f1f5f9;font-size:26px;margin:0 0 6px;font-weight:700;letter-spacing:-0.5px;">Painel de Metas</h1>
       <p style="color:#64748b;font-size:14px;">Acesse sua meta diária</p>
-    </div>
-
-    <div id="sync-status" class="sync-bar hidden">
-      <div id="sync-dot" class="sync-dot"></div>
-      <span id="sync-msg" style="font-size:12px;"></span>
     </div>
 
     <div class="card">
@@ -105,7 +197,9 @@
       <div id="erro-login" class="hidden" style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:8px;padding:10px 14px;margin-bottom:16px;color:#fca5a5;font-size:13px;"></div>
       <button class="btn-primary" onclick="handleLogin()">Entrar</button>
       <div style="margin-top:20px;padding:12px 14px;background:rgba(99,102,241,0.08);border-radius:8px;border:1px solid rgba(99,102,241,0.15);">
-        <p style="color:#94a3b8;font-size:11px;line-height:1.6;">💡 Em caso de dúvidas sobre sua senha, fale com o administrador.</p>
+        <p style="color:#94a3b8;font-size:11px;line-height:1.6;">
+          💡 Em caso de dúvidas sobre sua senha, fale com o administrador.
+        </p>
       </div>
     </div>
 
@@ -119,14 +213,18 @@
       <label>Senha do Administrador</label>
       <input id="inp-admin-senha" type="password" placeholder="Senha do administrador" style="margin-bottom:10px;" />
       <div id="erro-admin" class="hidden" style="color:#fca5a5;font-size:12px;margin:0 0 8px;"></div>
-      <button onclick="handleAdmin()" style="width:100%;padding:10px;border-radius:8px;border:none;background:rgba(99,102,241,0.3);color:#a5b4fc;font-size:13px;font-weight:600;font-family:Georgia,serif;">Entrar como Admin</button>
+      <button onclick="handleAdmin()" style="width:100%;padding:10px;border-radius:8px;border:none;background:rgba(99,102,241,0.3);color:#a5b4fc;font-size:13px;font-weight:600;font-family:Georgia,serif;">
+        Entrar como Admin
+      </button>
     </div>
+
   </div>
 </div>
 
 <!-- PAINEL USUÁRIO -->
 <div id="tela-painel" class="tela hidden">
   <div style="width:100%;max-width:460px;">
+
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
       <div>
         <p id="painel-data" style="color:#64748b;font-size:12px;margin:0 0 2px;text-transform:uppercase;letter-spacing:1px;"></p>
@@ -144,29 +242,30 @@
         </div>
       </div>
 
+      <!-- Meta principal -->
       <div id="painel-meta-box" style="background:rgba(15,23,42,0.5);border-radius:16px;padding:28px 24px;text-align:center;margin-bottom:16px;">
         <p style="color:#64748b;font-size:12px;margin:0 0 12px;text-transform:uppercase;letter-spacing:1px;">Meta do Dia</p>
         <div id="painel-valor" style="font-size:48px;font-weight:800;letter-spacing:-2px;margin-bottom:12px;"></div>
         <span id="painel-badge" class="badge" style="padding:5px 14px;font-size:12px;"></span>
       </div>
 
+      <!-- Métricas adicionais da planilha -->
       <div class="metricas-grid">
         <div class="metrica-card">
-          <div class="metrica-label">📦 Vendas Brutas</div>
+          <div class="metrica-label">🎯 Saldo de Metas</div>
           <div class="metrica-valor" id="painel-vendas-brutas">—</div>
         </div>
         <div class="metrica-card">
-          <div class="metrica-label">📉 Deduções</div>
-          <div class="metrica-valor" id="painel-deducoes" style="color:#f87171;">—</div>
+          <div class="metrica-label">✅ Venda Realizada</div>
+          <div class="metrica-valor" id="painel-deducoes" style="color:#34d399;">—</div>
         </div>
-        <div class="metrica-card" style="grid-column:1/-1;">
-          <div class="metrica-label">✅ Resultado Líquido</div>
-          <div class="metrica-valor" id="painel-resultado" style="color:#34d399;font-size:18px;">—</div>
+        <div class="metrica-card" style="grid-column: 1 / -1;">
+          <div class="metrica-label">📉 Falta para Meta</div>
+          <div class="metrica-valor" id="painel-resultado" style="color:#f87171;font-size:18px;">—</div>
         </div>
       </div>
     </div>
 
-    <!-- Versículo -->
     <div style="background:linear-gradient(135deg,rgba(30,41,59,0.9),rgba(15,23,42,0.8));backdrop-filter:blur(20px);border:1px solid rgba(167,139,250,0.25);border-radius:20px;padding:24px;margin-bottom:16px;box-shadow:0 8px 32px rgba(0,0,0,0.3);position:relative;overflow:hidden;min-height:110px;">
       <div style="position:absolute;top:-8px;left:16px;font-size:80px;color:rgba(167,139,250,0.10);font-family:Georgia,serif;line-height:1;pointer-events:none;user-select:none;">"</div>
       <div style="position:relative;">
@@ -188,8 +287,9 @@
     </div>
 
     <div style="background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.2);border-radius:12px;padding:16px;text-align:center;">
-      <p style="color:#94a3b8;font-size:13px;margin:0;">📌 Dados atualizados direto do Google Sheets.</p>
+      <p style="color:#94a3b8;font-size:13px;margin:0;">📌 Estes são seus dados exclusivos. Para dúvidas, fale com seu gestor.</p>
     </div>
+
   </div>
 </div>
 
@@ -197,83 +297,43 @@
 <div id="tela-admin" class="tela-admin hidden">
   <div style="max-width:1100px;margin:0 auto;">
 
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:28px;flex-wrap:wrap;gap:12px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:28px;">
       <div>
         <h1 style="color:#f1f5f9;font-size:24px;margin:0 0 4px;font-weight:800;">🛠️ Painel Administrador</h1>
-        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-          <p id="admin-contagem" style="color:#64748b;font-size:13px;margin:0;"></p>
-          <span id="fonte-indicador" class="fonte-badge fonte-live hidden"></span>
-        </div>
+        <p id="admin-contagem" style="color:#64748b;font-size:13px;margin:0;"></p>
       </div>
-      <div style="display:flex;gap:10px;flex-wrap:wrap;">
-        <button onclick="limparCacheESincronizar()" class="btn-danger" style="padding:10px 18px;border-radius:10px;font-size:13px;">🗑️ Limpar Cache</button>
-        <button onclick="sincronizar(true)"          class="btn-sec"    style="padding:10px 18px;border-radius:10px;font-size:13px;">🔄 Sincronizar</button>
-        <button onclick="irLogin()"                  class="btn-sec"    style="padding:10px 20px;border-radius:10px;font-size:13px;">← Voltar</button>
-      </div>
+      <button class="btn-sec" style="padding:10px 20px;border-radius:10px;font-size:13px;" onclick="irLogin()">← Voltar ao Login</button>
     </div>
 
-    <!-- Config Google Sheets -->
-    <div class="sheets-config">
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
-        <span style="font-size:28px;">📋</span>
-        <div>
-          <h3 style="color:#f1f5f9;font-size:15px;margin:0 0 2px;font-weight:700;">Google Sheets — Fonte de Dados</h3>
-          <p style="color:#64748b;font-size:12px;margin:0;">Cole a URL da planilha. A planilha deve estar pública para visualização.</p>
-        </div>
-      </div>
-
-      <div id="sheets-status-bar" class="sync-bar" style="margin-bottom:14px;">
-        <div id="sheets-dot" class="sync-dot"></div>
-        <span id="sheets-msg" style="font-size:12px;color:#86efac;"></span>
-      </div>
-
-      <!-- Aviso sobre cache -->
-      <div id="cache-aviso" class="hidden" style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);border-radius:10px;padding:12px 16px;margin-bottom:14px;display:flex;align-items:center;gap:10px;">
-        <span style="font-size:16px;">⚠️</span>
-        <div>
-          <p style="color:#fbbf24;font-size:12px;font-weight:700;margin:0 0 2px;">Dados em cache detectados</p>
-          <p style="color:#94a3b8;font-size:11px;margin:0;">O sistema está usando dados salvos localmente. Clique em <strong style="color:#fbbf24;">Limpar Cache</strong> para forçar dados frescos do Sheets.</p>
-        </div>
-      </div>
-
-      <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;">
-        <div style="flex:1;min-width:220px;">
-          <label>URL do Google Sheets</label>
-          <input id="inp-sheets-url" type="text" placeholder="https://docs.google.com/spreadsheets/d/SEU_ID/edit" />
-        </div>
-        <button onclick="salvarEsincronizar()" style="background:linear-gradient(135deg,#6366f1,#8b5cf6);border:none;color:white;padding:13px 22px;border-radius:10px;font-size:13px;font-weight:700;white-space:nowrap;box-shadow:0 4px 20px rgba(99,102,241,0.4);">
-          💾 Salvar e Sincronizar
-        </button>
-      </div>
-
-      <details style="margin-top:16px;">
-        <summary style="padding:8px 0;">❓ Como conectar ao Google Sheets?</summary>
-        <div style="margin-top:12px;padding:16px;background:rgba(15,23,42,0.5);border-radius:10px;color:#94a3b8;font-size:12px;line-height:2.2;">
-          <strong style="color:#a5b4fc;">Passo 1 — Deixar a planilha pública:</strong><br>
-          1. Abra sua planilha no Google Sheets<br>
-          2. <strong style="color:#f1f5f9;">Compartilhar → Qualquer pessoa com o link → Leitor</strong><br>
-          3. Copie a URL da barra do navegador e cole acima<br><br>
-          <strong style="color:#a5b4fc;">Colunas esperadas (linha 1 = cabeçalho ou dados):</strong><br>
-          <code style="background:rgba(99,102,241,0.2);color:#a5b4fc;padding:2px 8px;border-radius:4px;">Nome | Vendas Brutas | Deduções | Resultado | Meta | Senha (opcional)</code><br><br>
-          <strong style="color:#22c55e;">🔄 Atualização:</strong> dados buscados ao vivo a cada acesso. Cache usado só se Sheets falhar.<br><br>
-          <strong style="color:#f59e0b;">⚡ Editou a planilha e não apareceu?</strong> Clique em <strong style="color:#fbbf24;">Limpar Cache</strong> e depois <strong style="color:#a5b4fc;">Sincronizar</strong>.
-        </div>
-      </details>
+    <div class="upload-zone">
+      <div style="font-size:40px;margin-bottom:12px;">📊</div>
+      <h3 style="color:#f1f5f9;margin:0 0 8px;font-size:17px;">Atualizar Planilha</h3>
+      <p style="color:#64748b;font-size:13px;margin:0 0 20px;">
+        Envie um .xlsx com colunas: <strong style="color:#a5b4fc;">Colaborador | Saldo de Metas | Venda | Falta | Meta Diária | Login | Senha</strong>
+      </p>
+      <input id="file-input" type="file" accept=".xlsx,.xls" style="display:none;" onchange="handleArquivo(event)" />
+      <button class="btn-upload" id="btn-upload" onclick="document.getElementById('file-input').click()">
+        📁 Selecionar Arquivo .xlsx
+      </button>
     </div>
 
-    <!-- Tabela -->
     <div style="background:rgba(30,41,59,0.8);border:1px solid rgba(99,102,241,0.2);border-radius:20px;overflow:hidden;">
-      <div style="padding:20px 24px;border-bottom:1px solid rgba(99,102,241,0.15);display:flex;justify-content:space-between;align-items:center;">
-        <h3 style="color:#f1f5f9;margin:0;font-size:15px;font-weight:700;">Usuários Carregados</h3>
-        <span id="ultima-sync" style="color:#64748b;font-size:11px;"></span>
+      <div style="padding:20px 24px;border-bottom:1px solid rgba(99,102,241,0.15);">
+        <h3 style="color:#f1f5f9;margin:0;font-size:15px;font-weight:700;">Lista de Usuários e Credenciais</h3>
       </div>
       <div style="overflow-x:auto;">
         <table>
           <thead>
             <tr>
-              <th>Nome</th><th>Login (1º Nome)</th><th>Senha</th>
-              <th>Vendas Brutas</th><th>Deduções</th><th>Resultado</th>
-              <th>Meta</th><th>Status</th>
+              <th>Nome</th>
+              <th>Login</th>
+              <th>Senha</th>
+              <th>Saldo de Metas</th>
+              <th>Venda</th>
+              <th>Falta</th>
+              <th>Meta Diária</th>
+              <th>Status</th>
+              <th>Ações</th>
             </tr>
           </thead>
           <tbody id="admin-tbody"></tbody>
@@ -283,7 +343,8 @@
 
     <div style="margin-top:16px;padding:14px 16px;background:rgba(99,102,241,0.08);border-radius:10px;border:1px solid rgba(99,102,241,0.2);">
       <p style="color:#94a3b8;font-size:12px;margin:0;">
-        📊 Planilha aceita: <strong style="color:#a5b4fc;">Nome | Vendas Brutas | Deduções | Resultado | Meta | Senha (opcional)</strong>
+        🔐 <strong style="color:#a5b4fc;">Senha individual:</strong> clique em "Editar" para definir por usuário.<br>
+        📊 A planilha aceita: <strong style="color:#a5b4fc;">Colaborador | Saldo de Metas | Venda | Falta | Meta Diária | Login | Senha</strong>
       </p>
     </div>
 
@@ -291,418 +352,320 @@
 </div>
 
 <script>
-// ══════════════════════════════════════════════════════════════════
-//  ⚙️  CONFIGURAÇÃO
-// ══════════════════════════════════════════════════════════════════
-var SHEETS_URL_PADRAO = 'https://docs.google.com/spreadsheets/d/1iWkNlmazuEXBzQzYUh8tRbZ9M9zlaJGwK7A-2epYhrA/edit?gid=0#gid=0';
-var SENHA_ADMIN = '140695';
-
-// Cache expira após 5 minutos — força busca ao vivo na maioria dos acessos
-var CACHE_TTL_MS = 5 * 60 * 1000;
-
-// Fallback hardcoded: usado APENAS se Sheets falhar E não houver cache válido
-var DADOS_HARDCODED = [
-  { nome:'ANA PAULA CHAVES SOARES',         vendasBrutas:56967.92,  deducoes:18940.85, resultado:38027.07, meta:2535.14, senha:'7382' },
-  { nome:'CARLA LETICIA SILVA ANDRADE',      vendasBrutas:56157.77,  deducoes:16433.26, resultado:39724.51, meta:2648.30, senha:'4951' },
-  { nome:'ELISANGELA SATURNINO',             vendasBrutas:103963.94, deducoes:47761.20, resultado:56202.74, meta:3746.85, senha:'2847' },
-  { nome:'Fagner Magalhaes Fontes',          vendasBrutas:5187.31,   deducoes:2609.19,  resultado:2578.12,  meta:171.87,  senha:'6134' },
-  { nome:'Felipe Pereira Amaral',            vendasBrutas:51633.77,  deducoes:268.31,   resultado:51365.46, meta:3424.36, senha:'9463' },
-  { nome:'Géssica dos Santos Araújo',        vendasBrutas:13559.11,  deducoes:5094.17,  resultado:8464.94,  meta:564.33,  senha:'3718' },
-  { nome:'IASMIN DOS SANTOS',               vendasBrutas:6867.53,   deducoes:7348.81,  resultado:-481.28,  meta:-32.09,  senha:'5290' },
-  { nome:'Iraci Santana Santos',             vendasBrutas:51666.53,  deducoes:19594.48, resultado:32072.05, meta:2138.14, senha:'8641' },
-  { nome:'LUCAS PINA DOS SANTOS',           vendasBrutas:44551.26,  deducoes:21441.99, resultado:23109.27, meta:1540.62, senha:'1075' },
-  { nome:'MARIA ANA DE JESUS DOS SANTOS C', vendasBrutas:50013.68,  deducoes:21690.15, resultado:28323.53, meta:1888.24, senha:'4823' },
-  { nome:'ROGERIO DOS SANTOS',              vendasBrutas:3062.95,   deducoes:2358.32,  resultado:704.63,   meta:46.98,   senha:'7156' },
-  { nome:'ROSEMARY DE JESUS SANTOS C',      vendasBrutas:72250.28,  deducoes:34750.05, resultado:37500.23, meta:2500.02, senha:'3947' },
-  { nome:'TATIANE SOUZA FERNANDES',         vendasBrutas:88545.97,  deducoes:39949.32, resultado:48596.65, meta:3239.78, senha:'6512' },
-  { nome:'THAIS DE JESUS DOS SANTOS',       vendasBrutas:11215.94,  deducoes:3801.44,  resultado:7414.50,  meta:494.30,  senha:'2384' },
-  { nome:'YANNI SANTOS GOTARDO',            vendasBrutas:9508.06,   deducoes:4426.59,  resultado:5081.47,  meta:338.76,  senha:'8061' },
+// ── Dados (importados da planilha) ─────────────────────────────────
+// Colunas: COLABORADOR | SALDO DE METAS | VENDA | FALTA | META DIARIA | LOGIN | SENHA
+var usuarios = [
+  { nome: "ANA PAULA CHAVES SOARES",         saldoMetas: 56967.92,  venda: 21332.27, falta: 35635.65, metaDiaria:  2545.40, login: "ana",       senha: "7382" },
+  { nome: "CARLA LETICIA SILVA ANDRADE",      saldoMetas: 56157.77,  venda: 19061.62, falta: 37096.15, metaDiaria:  2649.73, login: "carla",     senha: "4951" },
+  { nome: "ELISANGELA SATURNINO",             saldoMetas: 103963.94, venda: 51075.06, falta: 52888.88, metaDiaria:  3777.78, login: "elisangela",senha: "2847" },
+  { nome: "Fagner Magalhaes Fontes",          saldoMetas: 5187.31,   venda: 4792.94,  falta:   394.37, metaDiaria:    28.17, login: "fagner",    senha: "6134" },
+  { nome: "Felipe Pereira Amaral",            saldoMetas: 51633.77,  venda:  268.31,  falta: 51365.46, metaDiaria:  3668.96, login: "felipe",    senha: "9463" },
+  { nome: "Géssica dos Santos Araújo",        saldoMetas: 13559.11,  venda: 5509.08,  falta:  8050.03, metaDiaria:   575.00, login: "gessica",   senha: "3718" },
+  { nome: "IASMIN DOS SANTOS",               saldoMetas: 6867.53,   venda: 7473.10,  falta:  -605.57, metaDiaria:   -43.26, login: "iasmin",    senha: "5290" },
+  { nome: "Iraci Santana Santos",             saldoMetas: 51666.53,  venda: 22712.34, falta: 28954.19, metaDiaria:  2068.16, login: "iraci",     senha: "8641" },
+  { nome: "LUCAS PINA DOS SANTOS",           saldoMetas: 44551.26,  venda: 22725.99, falta: 21825.27, metaDiaria:  1558.95, login: "lucas",     senha: "1075" },
+  { nome: "MARIA ANA DE JESUS DOS SANTOS C", saldoMetas: 50013.68,  venda: 26307.90, falta: 23705.78, metaDiaria:  1693.27, login: "maria",     senha: "4823" },
+  { nome: "ROGERIO DOS SANTOS",              saldoMetas: 3062.95,   venda: 2358.32,  falta:   704.63, metaDiaria:    50.33, login: "rogerio",   senha: "7156" },
+  { nome: "ROSEMARY DE JESUS SANTOS C",      saldoMetas: 72250.28,  venda: 36482.62, falta: 35767.66, metaDiaria:  2554.83, login: "rosemary",  senha: "3947" },
+  { nome: "TATIANE SOUZA FERNANDES",         saldoMetas: 88545.97,  venda: 39929.94, falta: 48616.03, metaDiaria:  3472.57, login: "tatiane",   senha: "6512" },
+  { nome: "THAIS DE JESUS DOS SANTOS",       saldoMetas: 11215.94,  venda: 4111.23,  falta:  7104.71, metaDiaria:   507.48, login: "thais",     senha: "2384" },
+  { nome: "YANNI SANTOS GOTARDO",            saldoMetas: 9508.06,   venda: 4636.45,  falta:  4871.61, metaDiaria:   347.97, login: "yanni",     senha: "8061" },
 ];
 
-// ── Estado ─────────────────────────────────────────────────────────
-// URL: sempre prioriza localStorage (admin pode mudar), senão usa o padrão
-var SHEETS_URL    = localStorage.getItem('sheets_url') || SHEETS_URL_PADRAO;
-var usuarios      = [];
+var SENHA_ADMIN = "140695";
 var usuarioLogado = null;
-var versiculoCache= {};
-var fonteAtual    = 'live'; // 'live' | 'cache' | 'hardcoded'
+var versiculoCache = {};
 
-// ── Orbs ───────────────────────────────────────────────────────────
+// ── Orbs ──────────────────────────────────────────────────────────
 (function(){
-  var c=document.getElementById('orbs');
-  var sizes=[300,400,350,500,320,450],tops=[10,60,30,70,20,80],lefts=[20,70,50,10,80,40];
-  for(var i=0;i<sizes.length;i++){var d=document.createElement('div');d.className='orb';d.style.cssText='width:'+sizes[i]+'px;height:'+sizes[i]+'px;top:'+tops[i]+'%;left:'+lefts[i]+'%;';c.appendChild(d);}
+  var orbs = document.getElementById('orbs');
+  var sizes = [300,400,350,500,320,450];
+  var tops  = [10,60,30,70,20,80];
+  var lefts = [20,70,50,10,80,40];
+  for (var i = 0; i < sizes.length; i++) {
+    var d = document.createElement('div');
+    d.className = 'orb';
+    d.style.width  = sizes[i] + 'px';
+    d.style.height = sizes[i] + 'px';
+    d.style.top    = tops[i]  + '%';
+    d.style.left   = lefts[i] + '%';
+    orbs.appendChild(d);
+  }
 })();
 
-// ── Helpers ────────────────────────────────────────────────────────
-function brl(v){ return Number(v).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}); }
-function getInitials(n){ return n.trim().split(/\s+/).slice(0,2).map(function(p){return p[0].toUpperCase();}).join(''); }
-function getStatus(m){
-  return {label:'Você Consegue', color: m>=3000?'#22c55e':m>=2000?'#3b82f6':m>=1000?'#f59e0b':m>=0?'#f97316':'#ef4444',
-          bg:    m>=3000?'rgba(34,197,94,0.12)':m>=2000?'rgba(59,130,246,0.12)':m>=1000?'rgba(245,158,11,0.12)':m>=0?'rgba(249,115,22,0.12)':'rgba(239,68,68,0.12)'};
-}
-function hashSeed(n,d){var s=n.toLowerCase().replace(/\s+/g,'')+d,h=0;for(var i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))>>>0;return h;}
-function hojeFormatado(){ return new Date().toLocaleDateString('pt-BR',{weekday:'long',year:'numeric',month:'long',day:'numeric'}); }
-function dataISO(){ return new Date().toISOString().slice(0,10); }
-function senhaEfetiva(u){
-  if(u.senha&&u.senha.trim()!=='') return u.senha.trim();
-  var p=u.nome.trim().split(/\s+/);
-  return p[0].toLowerCase()+p[p.length-1].toLowerCase()+'123';
+// ── Helpers ───────────────────────────────────────────────────────
+function senhaEfetiva(u) {
+  if (u.senha && u.senha.trim() !== '') return u.senha.trim();
+  var p = u.nome.trim().split(/\s+/);
+  return p[0].toLowerCase() + p[p.length-1].toLowerCase() + '123';
 }
 
-// ── Cache helpers ──────────────────────────────────────────────────
-function cacheValido(){
-  var ts=localStorage.getItem('cache_timestamp');
-  if(!ts) return false;
-  return (Date.now()-parseInt(ts,10)) < CACHE_TTL_MS;
-}
-function salvarCache(data){
-  localStorage.setItem('usuarios_cache', JSON.stringify(data));
-  localStorage.setItem('cache_timestamp', Date.now().toString());
-  localStorage.setItem('ultima_sync', new Date().toLocaleString('pt-BR'));
-}
-function lerCache(){
-  try{ return JSON.parse(localStorage.getItem('usuarios_cache')||'null'); }catch(e){ return null; }
-}
-function limparCache(){
-  localStorage.removeItem('usuarios_cache');
-  localStorage.removeItem('cache_timestamp');
-  localStorage.removeItem('ultima_sync');
+function getInitials(nome) {
+  return nome.trim().split(/\s+/).slice(0,2).map(function(p){ return p[0].toUpperCase(); }).join('');
 }
 
-// ── Parse CSV ──────────────────────────────────────────────────────
-function parseCSV(text){
-  var linhas=text.trim().split('\n'),dados=[];
-  // detecta se primeira linha é cabeçalho
-  var ini=0;
-  if(linhas[0]&&/nome|name|funcionario/i.test(linhas[0].split(/[;,]/)[0])) ini=1;
-  for(var i=ini;i<linhas.length;i++){
-    var sep=linhas[i].indexOf(';')!==-1?';':',';
-    var cols=linhas[i].split(sep);
-    var nome=(cols[0]||'').replace(/"/g,'').trim();
-    if(!nome||nome.length<2) continue;
-    var vb =parseFloat((cols[1]||'0').replace(/"/g,'').replace(/\./g,'').replace(',','.').replace(/[^\d.\-]/g,''))||0;
-    var ded=parseFloat((cols[2]||'0').replace(/"/g,'').replace(/\./g,'').replace(',','.').replace(/[^\d.\-]/g,''))||0;
-    var res=parseFloat((cols[3]||'0').replace(/"/g,'').replace(/\./g,'').replace(',','.').replace(/[^\d.\-]/g,''))||0;
-    var met=parseFloat((cols[4]||'0').replace(/"/g,'').replace(/\./g,'').replace(',','.').replace(/[^\d.\-]/g,''))||0;
-    var sen=(cols[5]||'').replace(/"/g,'').trim();
-    dados.push({nome:nome,vendasBrutas:vb,deducoes:ded,resultado:res,meta:met,senha:sen});
+function getStatus(meta) {
+  if (meta >= 3000) return { label:'Você Consegue', color:'#22c55e', bg:'rgba(34,197,94,0.12)' };
+  if (meta >= 2000) return { label:'Você Consegue', color:'#3b82f6', bg:'rgba(59,130,246,0.12)' };
+  if (meta >= 1000) return { label:'Você Consegue', color:'#f59e0b', bg:'rgba(245,158,11,0.12)' };
+  if (meta >= 0)    return { label:'Você Consegue', color:'#f97316', bg:'rgba(249,115,22,0.12)' };
+  return               { label:'Você Consegue', color:'#ef4444', bg:'rgba(239,68,68,0.12)' };
+}
+
+function hashSeed(nome, data) {
+  var s = nome.toLowerCase().replace(/\s+/g,'') + data;
+  var h = 0;
+  for (var i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+  return h;
+}
+
+function hojeFormatado() {
+  return new Date().toLocaleDateString('pt-BR', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+}
+function dataISO() {
+  return new Date().toISOString().slice(0,10);
+}
+
+function brl(v) {
+  return Number(v).toLocaleString('pt-BR', { style:'currency', currency:'BRL' });
+}
+
+// ── Navegação ─────────────────────────────────────────────────────
+function mostrar(id) {
+  var telas = ['tela-login','tela-painel','tela-admin'];
+  for (var i = 0; i < telas.length; i++) {
+    var el = document.getElementById(telas[i]);
+    if (telas[i] === id) el.classList.remove('hidden');
+    else el.classList.add('hidden');
   }
-  return dados;
 }
 
-// ── Extrai ID e GID da URL ─────────────────────────────────────────
-function extrairSheetId(url){
-  var m=url.match(/\/spreadsheets\/d\/([a-zA-Z0-9_-]+)/);
-  return m?m[1]:null;
-}
-function extrairGid(url){
-  var m=url.match(/[?&#]gid=([0-9]+)/);
-  return m?m[1]:'0';
-}
-
-// ── Fetch via gviz ─────────────────────────────────────────────────
-async function fetchViaGviz(sheetId, gid){
-  // bust de cache com timestamp + número aleatório
-  var bust = Date.now()+'-'+Math.random().toString(36).slice(2);
-  var url='https://docs.google.com/spreadsheets/d/'+sheetId+'/gviz/tq?tqx=out:csv&gid='+gid+'&cb='+bust;
-  var res=await fetch(url, {cache:'no-store', headers:{'Cache-Control':'no-cache, no-store'}});
-  if(!res.ok) throw new Error('HTTP '+res.status);
-  var csv=await res.text();
-  if(!csv||csv.trim().startsWith('<')) throw new Error('Planilha não está pública ou retornou HTML');
-  var data=parseCSV(csv);
-  if(data.length===0) throw new Error('CSV sem dados válidos');
-  return data;
-}
-
-// ── Fetch via URL CSV publicado ────────────────────────────────────
-async function fetchViaCSV(url){
-  var bust = Date.now()+'-'+Math.random().toString(36).slice(2);
-  var final=url+(url.includes('?')?'&':'?')+'cb='+bust;
-  var res=await fetch(final, {cache:'no-store', headers:{'Cache-Control':'no-cache, no-store'}});
-  if(!res.ok) throw new Error('HTTP '+res.status);
-  var csv=await res.text();
-  if(!csv||csv.trim().startsWith('<')) throw new Error('Retornou HTML');
-  var data=parseCSV(csv);
-  if(data.length===0) throw new Error('CSV vazio');
-  return data;
-}
-
-// ══════════════════════════════════════════════════════════════════
-//  SINCRONIZAÇÃO — prioridade:
-//  1. Ao vivo via gviz  (sempre tentado primeiro)
-//  2. Ao vivo via CSV   (se gviz falhar)
-//  3. Cache local       (se Sheets inacessível)
-//  4. Hardcoded         (último recurso)
-// ══════════════════════════════════════════════════════════════════
-async function sincronizar(manual){
-  var msgEl=document.getElementById('loading-msg');
-  if(manual) setSyncStatus('loading','⏳ Buscando dados do Sheets...');
-  var erros=[];
-
-  // ── Camada 1: gviz/tq ─────────────────────────────────────────
-  try{
-    if(msgEl) msgEl.textContent='Conectando ao Google Sheets...';
-    var sid=extrairSheetId(SHEETS_URL);
-    var gid=extrairGid(SHEETS_URL);
-    if(!sid) throw new Error('ID da planilha não encontrado na URL');
-    var data=await fetchViaGviz(sid,gid);
-    usuarios=data; fonteAtual='live';
-    salvarCache(usuarios);
-    setSyncStatus('ok','✅ Dados ao vivo — '+usuarios.length+' usuários ('+new Date().toLocaleTimeString('pt-BR')+')');
-    if(manual){renderTabela();atualizarContagem();}
-    esconderLoading(); return;
-  }catch(e){ erros.push('gviz: '+e.message); }
-
-  // ── Camada 2: CSV publicado ────────────────────────────────────
-  try{
-    if(msgEl) msgEl.textContent='Tentando URL publicada...';
-    var data=await fetchViaCSV(SHEETS_URL);
-    usuarios=data; fonteAtual='live';
-    salvarCache(usuarios);
-    setSyncStatus('ok','✅ Dados ao vivo via CSV — '+usuarios.length+' usuários');
-    if(manual){renderTabela();atualizarContagem();}
-    esconderLoading(); return;
-  }catch(e){ erros.push('csv: '+e.message); }
-
-  // ── Camada 3: Cache local ──────────────────────────────────────
-  var cache=lerCache();
-  if(cache&&cache.length>0){
-    usuarios=cache; fonteAtual='cache';
-    var us=localStorage.getItem('ultima_sync')||'desconhecido';
-    setSyncStatus('aviso','⚠️ Sheets inacessível — cache de '+us);
-    if(manual){
-      renderTabela();atualizarContagem();
-      alert('Não foi possível conectar ao Sheets.\nUsando cache de: '+us+'\n\nDetalhes técnicos:\n'+erros.join('\n'));
-    }
-    esconderLoading(); return;
-  }
-
-  // ── Camada 4: Dados hardcoded ──────────────────────────────────
-  usuarios=DADOS_HARDCODED; fonteAtual='hardcoded';
-  setSyncStatus('erro','⚠️ Usando dados internos — Sheets inacessível');
-  if(manual){
-    renderTabela();atualizarContagem();
-    alert('Não foi possível conectar ao Sheets e não há cache.\nUsando dados internos.\n\nDetalhes:\n'+erros.join('\n'));
-  }
-  esconderLoading();
-}
-
-// ── Limpar cache e forçar sincronização ───────────────────────────
-async function limparCacheESincronizar(){
-  limparCache();
-  setSyncStatus('loading','🗑️ Cache limpo — buscando dados frescos...');
-  await sincronizar(true);
-}
-
-// ── Status visual ─────────────────────────────────────────────────
-function setSyncStatus(tipo, msg){
-  // tipo: 'ok' | 'aviso' | 'erro' | 'loading'
-  var mapa={ok:'',aviso:'aviso',erro:'erro',loading:''};
-
-  // barra de login
-  var bar=document.getElementById('sync-status');
-  var dot=document.getElementById('sync-dot');
-  var mel=document.getElementById('sync-msg');
-  if(bar){
-    bar.classList.remove('hidden','aviso','erro');
-    if(mapa[tipo]) bar.classList.add(mapa[tipo]);
-  }
-  if(dot){ dot.className='sync-dot'+(mapa[tipo]?' '+mapa[tipo]:''); }
-  if(mel){
-    mel.style.color=tipo==='ok'?'#86efac':tipo==='aviso'?'#fbbf24':tipo==='erro'?'#fca5a5':'#94a3b8';
-    mel.textContent=msg;
-  }
-
-  // barra de admin
-  var sb=document.getElementById('sheets-status-bar');
-  var sd=document.getElementById('sheets-dot');
-  var sm=document.getElementById('sheets-msg');
-  if(sb){ sb.classList.remove('aviso','erro'); if(mapa[tipo]) sb.classList.add(mapa[tipo]); }
-  if(sd){ sd.className='sync-dot'+(mapa[tipo]?' '+mapa[tipo]:''); }
-  if(sm){ sm.style.color=tipo==='ok'?'#86efac':tipo==='aviso'?'#fbbf24':tipo==='erro'?'#fca5a5':'#94a3b8'; sm.textContent=msg; }
-}
-
-function esconderLoading(){
-  var el=document.getElementById('tela-loading');
-  if(el) el.style.display='none';
-  mostrar('tela-login');
-}
-
-// ── Salvar URL e sincronizar ───────────────────────────────────────
-async function salvarEsincronizar(){
-  var url=document.getElementById('inp-sheets-url').value.trim();
-  if(!url){ alert('Cole a URL do Google Sheets primeiro.'); return; }
-  SHEETS_URL=url;
-  localStorage.setItem('sheets_url',url);
-  limparCache(); // força dados frescos ao trocar URL
-  await sincronizar(true);
-}
-
-// ── Navegação ──────────────────────────────────────────────────────
-function mostrar(id){
-  ['tela-login','tela-painel','tela-admin'].forEach(function(t){
-    document.getElementById(t).classList[t===id?'remove':'add']('hidden');
-  });
-}
-function irLogin(){
-  usuarioLogado=null;
-  document.getElementById('inp-login').value='';
-  document.getElementById('inp-senha').value='';
+function irLogin() {
+  usuarioLogado = null;
+  document.getElementById('inp-login').value = '';
+  document.getElementById('inp-senha').value = '';
   setErro('');
   mostrar('tela-login');
 }
-function sair(){ irLogin(); }
 
-// ── Login ──────────────────────────────────────────────────────────
-function setErro(msg){
-  var el=document.getElementById('erro-login');
-  if(msg){el.textContent='⚠️ '+msg;el.classList.remove('hidden');}
-  else el.classList.add('hidden');
+function sair() { irLogin(); }
+
+// ── Login ─────────────────────────────────────────────────────────
+function setErro(msg) {
+  var el = document.getElementById('erro-login');
+  if (msg) { el.textContent = '⚠️ ' + msg; el.classList.remove('hidden'); }
+  else      { el.classList.add('hidden'); }
 }
 
-function handleLogin(){
+function handleLogin() {
   setErro('');
-  if(usuarios.length===0){ setErro('Dados não carregados. Atualize a página.'); return; }
-  var login=document.getElementById('inp-login').value.trim().toLowerCase();
-  var senha=document.getElementById('inp-senha').value.trim();
-  var u=null;
-  for(var i=0;i<usuarios.length;i++){
-    if(usuarios[i].nome.trim().split(/\s+/)[0].toLowerCase()===login){u=usuarios[i];break;}
+  var login = document.getElementById('inp-login').value.trim().toLowerCase();
+  var senha = document.getElementById('inp-senha').value.trim();
+  var u = null;
+  for (var i = 0; i < usuarios.length; i++) {
+    if (usuarios[i].login.toLowerCase() === login) { u = usuarios[i]; break; }
   }
-  if(!u){ setErro('Usuário não encontrado.'); return; }
-  if(senha!==senhaEfetiva(u)){ setErro('Senha incorreta.'); return; }
-  usuarioLogado=u; abrirPainel();
+  if (!u) { setErro('Usuário não encontrado.'); return; }
+  if (senha !== senhaEfetiva(u)) { setErro('Senha incorreta.'); return; }
+  usuarioLogado = u;
+  abrirPainel();
 }
 
-document.getElementById('inp-login').addEventListener('keydown',function(e){if(e.key==='Enter')handleLogin();});
-document.getElementById('inp-senha').addEventListener('keydown',function(e){if(e.key==='Enter')handleLogin();});
+document.getElementById('inp-login').addEventListener('keydown', function(e){ if(e.key==='Enter') handleLogin(); });
+document.getElementById('inp-senha').addEventListener('keydown', function(e){ if(e.key==='Enter') handleLogin(); });
 
-// ── Admin login ────────────────────────────────────────────────────
-function toggleAdmin(){ document.getElementById('painel-admin-login').classList.toggle('hidden'); }
-function handleAdmin(){
-  var s=document.getElementById('inp-admin-senha').value.trim();
-  var err=document.getElementById('erro-admin');
-  if(s===SENHA_ADMIN){
+// ── Admin login ───────────────────────────────────────────────────
+function toggleAdmin() {
+  document.getElementById('painel-admin-login').classList.toggle('hidden');
+}
+
+function handleAdmin() {
+  var s   = document.getElementById('inp-admin-senha').value.trim();
+  var err = document.getElementById('erro-admin');
+  if (s === SENHA_ADMIN) {
     err.classList.add('hidden');
-    document.getElementById('inp-admin-senha').value='';
+    document.getElementById('inp-admin-senha').value = '';
     document.getElementById('painel-admin-login').classList.add('hidden');
     abrirAdmin();
   } else {
-    err.textContent='Senha incorreta.'; err.classList.remove('hidden');
+    err.textContent = 'Senha incorreta.';
+    err.classList.remove('hidden');
   }
 }
-document.getElementById('inp-admin-senha').addEventListener('keydown',function(e){if(e.key==='Enter')handleAdmin();});
 
-// ── Painel usuário ─────────────────────────────────────────────────
-function abrirPainel(){
-  var u=usuarioLogado, st=getStatus(u.meta);
-  document.getElementById('painel-data').textContent=hojeFormatado();
-  document.getElementById('painel-nome').textContent=u.nome;
-  document.getElementById('painel-avatar').textContent=getInitials(u.nome);
-  var ve=document.getElementById('painel-valor');
-  ve.textContent=brl(u.meta);
-  ve.style.background='linear-gradient(135deg,'+st.color+','+st.color+'aa)';
-  ve.style.webkitBackgroundClip='text';
-  ve.style.webkitTextFillColor='transparent';
-  document.getElementById('painel-meta-box').style.border='1px solid '+st.color+'30';
-  var b=document.getElementById('painel-badge');
-  b.textContent=st.label; b.style.background=st.bg; b.style.color=st.color;
-  document.getElementById('painel-vendas-brutas').textContent=brl(u.vendasBrutas);
-  document.getElementById('painel-deducoes').textContent=brl(u.deducoes);
-  document.getElementById('painel-resultado').textContent=brl(u.resultado);
+document.getElementById('inp-admin-senha').addEventListener('keydown', function(e){ if(e.key==='Enter') handleAdmin(); });
+
+// ── Painel usuário ────────────────────────────────────────────────
+function abrirPainel() {
+  var u   = usuarioLogado;
+  var st  = getStatus(u.metaDiaria);
+
+  document.getElementById('painel-data').textContent   = hojeFormatado();
+  document.getElementById('painel-nome').textContent   = u.nome;
+  document.getElementById('painel-avatar').textContent = getInitials(u.nome);
+
+  var valorEl = document.getElementById('painel-valor');
+  valorEl.textContent                = brl(u.metaDiaria);
+  valorEl.style.background           = 'linear-gradient(135deg,' + st.color + ',' + st.color + 'aa)';
+  valorEl.style.webkitBackgroundClip = 'text';
+  valorEl.style.webkitTextFillColor  = 'transparent';
+
+  document.getElementById('painel-meta-box').style.border = '1px solid ' + st.color + '30';
+
+  var badge = document.getElementById('painel-badge');
+  badge.textContent      = st.label;
+  badge.style.background = st.bg;
+  badge.style.color      = st.color;
+
+  // Preenche métricas adicionais
+  document.getElementById('painel-vendas-brutas').textContent = brl(u.saldoMetas);
+  document.getElementById('painel-deducoes').textContent      = brl(u.venda);
+  document.getElementById('painel-resultado').textContent     = brl(u.falta);
+
   mostrar('tela-painel');
-  carregarVersiculo(u.nome,dataISO());
+  carregarVersiculo(u.nome, dataISO());
 }
 
-// ── Versículo ──────────────────────────────────────────────────────
-async function buscarVersiculoIA(nome,data){
-  var key=nome+'|'+data;
-  if(versiculoCache[key]) return versiculoCache[key];
-  var semente=hashSeed(nome,data), primeiro=nome.trim().split(/\s+/)[0];
-  var prompt='Voce e um assistente cristao. Escolha UM versiculo biblico real para '+primeiro+' no dia '+data+'.\nUse a semente '+semente+' para variar.\nMotivador para o dia de trabalho. Explore toda a Biblia.\nNUNCA use Filipenses 4:13 ou Joao 3:16.\nResponda APENAS com JSON puro, sem markdown:\n{"texto":"versiculo completo","ref":"Livro cap:ver"}';
-  try{
-    var res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:300,messages:[{role:'user',content:prompt}]})});
-    var json=await res.json();
-    var raw=(json.content||[]).map(function(b){return b.text||'';}).join('').trim();
-    var parsed=JSON.parse(raw.replace(/```json|```/g,'').trim());
-    if(parsed.texto&&parsed.ref){versiculoCache[key]=parsed;return parsed;}
-  }catch(e){}
-  return {texto:'O Senhor é o meu pastor e nada me faltará.',ref:'Salmos 23:1'};
+// ── Versículo ─────────────────────────────────────────────────────
+async function buscarVersiculoIA(nome, data) {
+  var key = nome + '|' + data;
+  if (versiculoCache[key]) return versiculoCache[key];
+
+  var semente  = hashSeed(nome, data);
+  var primeiro = nome.trim().split(/\s+/)[0];
+
+  var prompt = 'Voce e um assistente cristao. Escolha UM versiculo biblico real para ' + primeiro + ' no dia ' + data + '.\n' +
+    'Use a semente ' + semente + ' para variar.\n' +
+    'O versiculo deve ser motivador e encorajador para o dia de trabalho.\n' +
+    'Explore toda a Biblia: Salmos, Proverbios, Isaias, Jeremias, Josue, Genesis, Deuteronomio, Joao, Romanos, Efesios, Filipenses, Colossenses, Hebreus, Apocalipse, etc.\n' +
+    'NUNCA use Filipenses 4:13 ou Joao 3:16.\n' +
+    'Responda APENAS com JSON puro, sem markdown:\n' +
+    '{"texto":"versiculo completo aqui","ref":"Livro capitulo:versiculo"}';
+
+  try {
+    var res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 300,
+        messages: [{ role: 'user', content: prompt }],
+      }),
+    });
+    var json   = await res.json();
+    var raw    = (json.content || []).map(function(b){ return b.text || ''; }).join('').trim();
+    var parsed = JSON.parse(raw.replace(/```json|```/g,'').trim());
+    if (parsed.texto && parsed.ref) {
+      versiculoCache[key] = parsed;
+      return parsed;
+    }
+  } catch(e) {}
+
+  return { texto: 'O Senhor é o meu pastor e nada me faltará.', ref: 'Salmos 23:1' };
 }
-async function carregarVersiculo(nome,data){
+
+async function carregarVersiculo(nome, data) {
   document.getElementById('versiculo-shimmer').classList.remove('hidden');
   document.getElementById('versiculo-conteudo').classList.add('hidden');
   document.getElementById('versiculo-spinner').classList.remove('hidden');
-  var v=await buscarVersiculoIA(nome,data);
-  document.getElementById('versiculo-texto').textContent='"'+v.texto+'"';
-  document.getElementById('versiculo-ref').textContent='— '+v.ref;
+
+  var v = await buscarVersiculoIA(nome, data);
+
+  document.getElementById('versiculo-texto').textContent = '"' + v.texto + '"';
+  document.getElementById('versiculo-ref').textContent   = '— ' + v.ref;
+
   document.getElementById('versiculo-shimmer').classList.add('hidden');
   document.getElementById('versiculo-conteudo').classList.remove('hidden');
   document.getElementById('versiculo-spinner').classList.add('hidden');
 }
 
-// ── Admin ──────────────────────────────────────────────────────────
-function atualizarContagem(){
-  document.getElementById('admin-contagem').textContent=usuarios.length+' usuários carregados';
-  var us=localStorage.getItem('ultima_sync');
-  var ulEl=document.getElementById('ultima-sync');
-  if(ulEl) ulEl.textContent=us?'Última sync: '+us:'';
-
-  // indicador de fonte
-  var fi=document.getElementById('fonte-indicador');
-  var cacheAv=document.getElementById('cache-aviso');
-  if(fi){
-    fi.classList.remove('hidden','fonte-live','fonte-cache','fonte-fixed');
-    if(fonteAtual==='live'){
-      fi.className='fonte-badge fonte-live'; fi.textContent='🟢 Dados ao vivo';
-      if(cacheAv) cacheAv.classList.add('hidden');
-    } else if(fonteAtual==='cache'){
-      fi.className='fonte-badge fonte-cache'; fi.textContent='🟡 Cache local';
-      if(cacheAv) cacheAv.classList.remove('hidden');
-    } else {
-      fi.className='fonte-badge fonte-fixed'; fi.textContent='🔴 Dados internos';
-      if(cacheAv) cacheAv.classList.remove('hidden');
-    }
-  }
-}
-
-function abrirAdmin(){
-  document.getElementById('inp-sheets-url').value=SHEETS_URL;
-  var us=localStorage.getItem('ultima_sync');
-  setSyncStatus(fonteAtual==='live'?'ok':fonteAtual==='cache'?'aviso':'erro',
-    us?'Última sync: '+us:'Nenhuma sincronização realizada ainda');
-  atualizarContagem();
+// ── Admin tabela ──────────────────────────────────────────────────
+function abrirAdmin() {
+  document.getElementById('admin-contagem').textContent = usuarios.length + ' usuários cadastrados';
   renderTabela();
   mostrar('tela-admin');
 }
 
-function renderTabela(){
-  var tbody=document.getElementById('admin-tbody');
-  tbody.innerHTML='';
-  if(usuarios.length===0){
-    tbody.innerHTML='<tr><td colspan="8" style="text-align:center;color:#64748b;padding:32px;font-size:14px;">Nenhum dado carregado.<br>Configure o Google Sheets acima e clique em <strong style="color:#a5b4fc;">Salvar e Sincronizar</strong>.</td></tr>';
-    return;
-  }
-  for(var i=0;i<usuarios.length;i++){
-    var u=usuarios[i],st=getStatus(u.meta),login=u.nome.trim().split(/\s+/)[0].toLowerCase(),senha=senhaEfetiva(u);
-    var tr=document.createElement('tr');
-    tr.innerHTML='<td style="color:#f1f5f9;font-weight:600;">'+u.nome+'</td>'+
-      '<td><code class="code-login">'+login+'</code></td>'+
-      '<td><code class="code-senha">'+senha+'</code></td>'+
-      '<td style="color:#94a3b8;">'+brl(u.vendasBrutas)+'</td>'+
-      '<td style="color:#f87171;">'+brl(u.deducoes)+'</td>'+
-      '<td style="color:#34d399;font-weight:700;">'+brl(u.resultado)+'</td>'+
-      '<td style="font-weight:800;color:'+st.color+';">'+brl(u.meta)+'</td>'+
-      '<td><span class="badge" style="background:'+st.bg+';color:'+st.color+';">'+st.label+'</span></td>';
+function renderTabela() {
+  var tbody = document.getElementById('admin-tbody');
+  tbody.innerHTML = '';
+  for (var i = 0; i < usuarios.length; i++) {
+    var u      = usuarios[i];
+    var st     = getStatus(u.metaDiaria);
+    var login  = u.login;
+    var senha  = senhaEfetiva(u);
+    var custom = u.senha && u.senha.trim() !== '';
+
+    var tr = document.createElement('tr');
+    tr.innerHTML =
+      '<td style="color:#f1f5f9;font-weight:600;">' + u.nome + '</td>' +
+      '<td><code class="code-login">' + login + '</code></td>' +
+      '<td><code class="code-senha">' + senha + '</code>' +
+        (custom ? '<span style="margin-left:6px;font-size:10px;color:#22c55e;font-weight:700;">custom</span>' : '') +
+      '</td>' +
+      '<td style="color:#94a3b8;">' + brl(u.saldoMetas) + '</td>' +
+      '<td style="color:#94a3b8;">' + brl(u.venda) + '</td>' +
+      '<td style="color:#34d399;font-weight:700;">' + brl(u.falta) + '</td>' +
+      '<td style="font-weight:800;color:' + st.color + ';">' + brl(u.metaDiaria) + '</td>' +
+      '<td><span class="badge" style="background:' + st.bg + ';color:' + st.color + ';">' + st.label + '</span></td>' +
+      '<td><button onclick="editarSenha(' + i + ')" style="background:rgba(99,102,241,0.2);border:1px solid rgba(99,102,241,0.4);color:#a5b4fc;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">Editar</button></td>';
     tbody.appendChild(tr);
   }
 }
 
-// ── Init ───────────────────────────────────────────────────────────
-window.addEventListener('DOMContentLoaded', function(){
-  sincronizar(false);
-});
+function editarSenha(i) {
+  var u    = usuarios[i];
+  var nova = prompt('Nova senha para ' + u.nome.trim().split(/\s+/)[0] + ' (atual: ' + senhaEfetiva(u) + '):', u.senha || '');
+  if (nova === null) return;
+  usuarios[i].senha = nova.trim();
+  renderTabela();
+}
+
+// ── Upload XLSX ───────────────────────────────────────────────────
+function handleArquivo(e) {
+  var file = e.target.files[0];
+  if (!file) return;
+  var btn = document.getElementById('btn-upload');
+  btn.textContent = 'Carregando...';
+  btn.disabled    = true;
+
+  var reader = new FileReader();
+  reader.onload = function(evt) {
+    try {
+      var wb   = XLSX.read(evt.target.result, { type: 'binary' });
+      var rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1 });
+      var novos = [];
+      for (var i = 0; i < rows.length; i++) {
+        var r = rows[i];
+        // Ignora cabeçalho e linhas sem nome
+        if (!r[0] || String(r[0]).trim().toUpperCase() === 'COLABORADOR') continue;
+        novos.push({
+          nome:       String(r[0]).trim(),
+          saldoMetas: parseFloat(String(r[1]).replace(/[^\d,.-]/g,'').replace(',','.')) || 0,
+          venda:      parseFloat(String(r[2]).replace(/[^\d,.-]/g,'').replace(',','.')) || 0,
+          falta:      parseFloat(String(r[3]).replace(/[^\d,.-]/g,'').replace(',','.')) || 0,
+          metaDiaria: parseFloat(String(r[4]).replace(/[^\d,.-]/g,'').replace(',','.')) || 0,
+          login:      r[5] ? String(r[5]).trim().toLowerCase() : String(r[0]).trim().split(/\s+/)[0].toLowerCase(),
+          senha:      r[6] ? String(r[6]).trim() : ''
+        });
+      }
+      if (novos.length > 0) {
+        usuarios = novos;
+        document.getElementById('admin-contagem').textContent = usuarios.length + ' usuários cadastrados';
+        renderTabela();
+        alert('✅ ' + novos.length + ' usuários carregados!');
+      } else {
+        alert('Nenhum dado encontrado.');
+      }
+    } catch(err) {
+      alert('Erro ao ler o arquivo.');
+    }
+    btn.textContent = '📁 Selecionar Arquivo .xlsx';
+    btn.disabled    = false;
+    e.target.value  = '';
+  };
+  reader.readAsBinaryString(file);
+}
 </script>
 </body>
 </html>
