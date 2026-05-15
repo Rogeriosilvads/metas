@@ -26,6 +26,8 @@
     .btn-primary:hover { opacity: 0.9; }
     .btn-sec { background: rgba(99,102,241,0.15); border: 1px solid rgba(99,102,241,0.3); color: #a5b4fc; padding: 8px 16px; border-radius: 8px; font-size: 12px; font-weight: 600; transition: background 0.2s; }
     .btn-sec:hover { background: rgba(99,102,241,0.25); }
+    .btn-danger { background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.3); color: #fca5a5; padding: 8px 16px; border-radius: 8px; font-size: 12px; font-weight: 600; transition: background 0.2s; }
+    .btn-danger:hover { background: rgba(239,68,68,0.25); }
     .shimmer-line { height: 13px; border-radius: 6px; margin-bottom: 9px; background: linear-gradient(90deg, rgba(167,139,250,0.07) 25%, rgba(167,139,250,0.18) 50%, rgba(167,139,250,0.07) 75%); background-size: 200% 100%; animation: shimmer 1.4s infinite; }
     .spinner { width: 14px; height: 14px; border-radius: 50%; border: 2px solid rgba(167,139,250,0.25); border-top-color: #a78bfa; animation: spin 0.8s linear infinite; margin-left: auto; flex-shrink: 0; }
     table { width: 100%; border-collapse: collapse; }
@@ -45,10 +47,16 @@
     #tela-loading { position: fixed; inset: 0; z-index: 100; background: linear-gradient(135deg, #0f172a, #1e293b); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; }
     .loading-logo { width: 80px; height: 80px; border-radius: 24px; background: linear-gradient(135deg, #6366f1, #8b5cf6); display: flex; align-items: center; justify-content: center; font-size: 36px; animation: pulse 1.5s ease-in-out infinite; }
     .sync-bar { display: flex; align-items: center; gap: 10px; background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.25); border-radius: 10px; padding: 10px 16px; margin-bottom: 16px; font-size: 13px; }
-    .sync-bar.erro { background: rgba(239,68,68,0.1); border-color: rgba(239,68,68,0.25); }
+    .sync-bar.aviso { background: rgba(245,158,11,0.1); border-color: rgba(245,158,11,0.25); }
+    .sync-bar.erro  { background: rgba(239,68,68,0.1); border-color: rgba(239,68,68,0.25); }
     .sync-dot { width: 8px; height: 8px; border-radius: 50%; background: #22c55e; flex-shrink: 0; }
-    .sync-dot.erro { background: #ef4444; }
+    .sync-dot.aviso { background: #f59e0b; }
+    .sync-dot.erro  { background: #ef4444; }
     .sheets-config { background: rgba(15,23,42,0.6); border: 1px solid rgba(99,102,241,0.2); border-radius: 16px; padding: 24px; margin-bottom: 24px; }
+    .fonte-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+    .fonte-live   { background: rgba(34,197,94,0.15);  color: #4ade80; border: 1px solid rgba(34,197,94,0.3); }
+    .fonte-cache  { background: rgba(245,158,11,0.15); color: #fbbf24; border: 1px solid rgba(245,158,11,0.3); }
+    .fonte-fixed  { background: rgba(239,68,68,0.15);  color: #f87171; border: 1px solid rgba(239,68,68,0.3); }
     details summary { color: #a5b4fc; font-size: 12px; cursor: pointer; font-weight: 600; list-style: none; }
   </style>
 </head>
@@ -65,7 +73,7 @@
   </div>
   <div style="display:flex;align-items:center;gap:8px;">
     <div class="spinner" style="width:18px;height:18px;border-width:2px;"></div>
-    <span style="color:#94a3b8;font-size:12px;">Carregando dados da planilha</span>
+    <span style="color:#94a3b8;font-size:12px;">Buscando dados atualizados</span>
   </div>
 </div>
 
@@ -82,7 +90,7 @@
 
     <div id="sync-status" class="sync-bar hidden">
       <div id="sync-dot" class="sync-dot"></div>
-      <span id="sync-msg" style="color:#86efac;font-size:12px;"></span>
+      <span id="sync-msg" style="font-size:12px;"></span>
     </div>
 
     <div class="card">
@@ -192,11 +200,15 @@
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:28px;flex-wrap:wrap;gap:12px;">
       <div>
         <h1 style="color:#f1f5f9;font-size:24px;margin:0 0 4px;font-weight:800;">🛠️ Painel Administrador</h1>
-        <p id="admin-contagem" style="color:#64748b;font-size:13px;margin:0;"></p>
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+          <p id="admin-contagem" style="color:#64748b;font-size:13px;margin:0;"></p>
+          <span id="fonte-indicador" class="fonte-badge fonte-live hidden"></span>
+        </div>
       </div>
-      <div style="display:flex;gap:10px;">
-        <button onclick="sincronizar(true)" class="btn-sec" style="padding:10px 18px;border-radius:10px;font-size:13px;">🔄 Sincronizar agora</button>
-        <button onclick="irLogin()"         class="btn-sec" style="padding:10px 20px;border-radius:10px;font-size:13px;">← Voltar ao Login</button>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <button onclick="limparCacheESincronizar()" class="btn-danger" style="padding:10px 18px;border-radius:10px;font-size:13px;">🗑️ Limpar Cache</button>
+        <button onclick="sincronizar(true)"          class="btn-sec"    style="padding:10px 18px;border-radius:10px;font-size:13px;">🔄 Sincronizar</button>
+        <button onclick="irLogin()"                  class="btn-sec"    style="padding:10px 20px;border-radius:10px;font-size:13px;">← Voltar</button>
       </div>
     </div>
 
@@ -206,13 +218,22 @@
         <span style="font-size:28px;">📋</span>
         <div>
           <h3 style="color:#f1f5f9;font-size:15px;margin:0 0 2px;font-weight:700;">Google Sheets — Fonte de Dados</h3>
-          <p style="color:#64748b;font-size:12px;margin:0;">Cole a URL da planilha. Funciona com link de edição ou de CSV publicado.</p>
+          <p style="color:#64748b;font-size:12px;margin:0;">Cole a URL da planilha. A planilha deve estar pública para visualização.</p>
         </div>
       </div>
 
       <div id="sheets-status-bar" class="sync-bar" style="margin-bottom:14px;">
         <div id="sheets-dot" class="sync-dot"></div>
         <span id="sheets-msg" style="font-size:12px;color:#86efac;"></span>
+      </div>
+
+      <!-- Aviso sobre cache -->
+      <div id="cache-aviso" class="hidden" style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);border-radius:10px;padding:12px 16px;margin-bottom:14px;display:flex;align-items:center;gap:10px;">
+        <span style="font-size:16px;">⚠️</span>
+        <div>
+          <p style="color:#fbbf24;font-size:12px;font-weight:700;margin:0 0 2px;">Dados em cache detectados</p>
+          <p style="color:#94a3b8;font-size:11px;margin:0;">O sistema está usando dados salvos localmente. Clique em <strong style="color:#fbbf24;">Limpar Cache</strong> para forçar dados frescos do Sheets.</p>
+        </div>
       </div>
 
       <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;">
@@ -228,18 +249,14 @@
       <details style="margin-top:16px;">
         <summary style="padding:8px 0;">❓ Como conectar ao Google Sheets?</summary>
         <div style="margin-top:12px;padding:16px;background:rgba(15,23,42,0.5);border-radius:10px;color:#94a3b8;font-size:12px;line-height:2.2;">
-          <strong style="color:#a5b4fc;">Opção A — Planilha pública (mais simples):</strong><br>
+          <strong style="color:#a5b4fc;">Passo 1 — Deixar a planilha pública:</strong><br>
           1. Abra sua planilha no Google Sheets<br>
-          2. <strong style="color:#f1f5f9;">Compartilhar → Qualquer pessoa com o link pode ver</strong><br>
+          2. <strong style="color:#f1f5f9;">Compartilhar → Qualquer pessoa com o link → Leitor</strong><br>
           3. Copie a URL da barra do navegador e cole acima<br><br>
-          <strong style="color:#a5b4fc;">Opção B — Publicar como CSV:</strong><br>
-          1. <strong style="color:#f1f5f9;">Arquivo → Compartilhar → Publicar na web</strong><br>
-          2. Selecione a aba e formato <strong style="color:#f1f5f9;">CSV</strong>, clique em Publicar<br>
-          3. Cole o link gerado acima<br><br>
-          <strong style="color:#a5b4fc;">Colunas esperadas:</strong><br>
+          <strong style="color:#a5b4fc;">Colunas esperadas (linha 1 = cabeçalho ou dados):</strong><br>
           <code style="background:rgba(99,102,241,0.2);color:#a5b4fc;padding:2px 8px;border-radius:4px;">Nome | Vendas Brutas | Deduções | Resultado | Meta | Senha (opcional)</code><br><br>
-          <strong style="color:#22c55e;">🛡️ Fallback automático:</strong> se o Sheets falhar, o sistema usa o cache local ou os dados internos — ninguém fica sem acesso.<br><br>
-          <strong style="color:#f59e0b;">⚡ Após editar o Sheets:</strong> os dados atualizam para todos em até 1 minuto.
+          <strong style="color:#22c55e;">🔄 Atualização:</strong> dados buscados ao vivo a cada acesso. Cache usado só se Sheets falhar.<br><br>
+          <strong style="color:#f59e0b;">⚡ Editou a planilha e não apareceu?</strong> Clique em <strong style="color:#fbbf24;">Limpar Cache</strong> e depois <strong style="color:#a5b4fc;">Sincronizar</strong>.
         </div>
       </details>
     </div>
@@ -276,14 +293,14 @@
 <script>
 // ══════════════════════════════════════════════════════════════════
 //  ⚙️  CONFIGURAÇÃO
-//  Cole a URL do Google Sheets aqui para já funcionar sem painel admin.
-//  O admin também pode configurar pelo painel sem editar o código.
 // ══════════════════════════════════════════════════════════════════
 var SHEETS_URL_PADRAO = 'https://docs.google.com/spreadsheets/d/1iWkNlmazuEXBzQzYUh8tRbZ9M9zlaJGwK7A-2epYhrA/edit?gid=0#gid=0';
-
 var SENHA_ADMIN = '140695';
 
-// ── Fallback hardcoded (usado só se Sheets falhar E não houver cache) ──
+// Cache expira após 5 minutos — força busca ao vivo na maioria dos acessos
+var CACHE_TTL_MS = 5 * 60 * 1000;
+
+// Fallback hardcoded: usado APENAS se Sheets falhar E não houver cache válido
 var DADOS_HARDCODED = [
   { nome:'ANA PAULA CHAVES SOARES',         vendasBrutas:56967.92,  deducoes:18940.85, resultado:38027.07, meta:2535.14, senha:'7382' },
   { nome:'CARLA LETICIA SILVA ANDRADE',      vendasBrutas:56157.77,  deducoes:16433.26, resultado:39724.51, meta:2648.30, senha:'4951' },
@@ -303,10 +320,12 @@ var DADOS_HARDCODED = [
 ];
 
 // ── Estado ─────────────────────────────────────────────────────────
+// URL: sempre prioriza localStorage (admin pode mudar), senão usa o padrão
 var SHEETS_URL    = localStorage.getItem('sheets_url') || SHEETS_URL_PADRAO;
 var usuarios      = [];
 var usuarioLogado = null;
 var versiculoCache= {};
+var fonteAtual    = 'live'; // 'live' | 'cache' | 'hardcoded'
 
 // ── Orbs ───────────────────────────────────────────────────────────
 (function(){
@@ -319,11 +338,8 @@ var versiculoCache= {};
 function brl(v){ return Number(v).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}); }
 function getInitials(n){ return n.trim().split(/\s+/).slice(0,2).map(function(p){return p[0].toUpperCase();}).join(''); }
 function getStatus(m){
-  if(m>=3000) return {label:'Você Consegue',color:'#22c55e',bg:'rgba(34,197,94,0.12)'};
-  if(m>=2000) return {label:'Você Consegue',color:'#3b82f6',bg:'rgba(59,130,246,0.12)'};
-  if(m>=1000) return {label:'Você Consegue',color:'#f59e0b',bg:'rgba(245,158,11,0.12)'};
-  if(m>=0)    return {label:'Você Consegue',color:'#f97316',bg:'rgba(249,115,22,0.12)'};
-              return {label:'Você Consegue',color:'#ef4444',bg:'rgba(239,68,68,0.12)'};
+  return {label:'Você Consegue', color: m>=3000?'#22c55e':m>=2000?'#3b82f6':m>=1000?'#f59e0b':m>=0?'#f97316':'#ef4444',
+          bg:    m>=3000?'rgba(34,197,94,0.12)':m>=2000?'rgba(59,130,246,0.12)':m>=1000?'rgba(245,158,11,0.12)':m>=0?'rgba(249,115,22,0.12)':'rgba(239,68,68,0.12)'};
 }
 function hashSeed(n,d){var s=n.toLowerCase().replace(/\s+/g,'')+d,h=0;for(var i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))>>>0;return h;}
 function hojeFormatado(){ return new Date().toLocaleDateString('pt-BR',{weekday:'long',year:'numeric',month:'long',day:'numeric'}); }
@@ -334,26 +350,48 @@ function senhaEfetiva(u){
   return p[0].toLowerCase()+p[p.length-1].toLowerCase()+'123';
 }
 
+// ── Cache helpers ──────────────────────────────────────────────────
+function cacheValido(){
+  var ts=localStorage.getItem('cache_timestamp');
+  if(!ts) return false;
+  return (Date.now()-parseInt(ts,10)) < CACHE_TTL_MS;
+}
+function salvarCache(data){
+  localStorage.setItem('usuarios_cache', JSON.stringify(data));
+  localStorage.setItem('cache_timestamp', Date.now().toString());
+  localStorage.setItem('ultima_sync', new Date().toLocaleString('pt-BR'));
+}
+function lerCache(){
+  try{ return JSON.parse(localStorage.getItem('usuarios_cache')||'null'); }catch(e){ return null; }
+}
+function limparCache(){
+  localStorage.removeItem('usuarios_cache');
+  localStorage.removeItem('cache_timestamp');
+  localStorage.removeItem('ultima_sync');
+}
+
 // ── Parse CSV ──────────────────────────────────────────────────────
 function parseCSV(text){
   var linhas=text.trim().split('\n'),dados=[];
-  for(var i=0;i<linhas.length;i++){
+  // detecta se primeira linha é cabeçalho
+  var ini=0;
+  if(linhas[0]&&/nome|name|funcionario/i.test(linhas[0].split(/[;,]/)[0])) ini=1;
+  for(var i=ini;i<linhas.length;i++){
     var sep=linhas[i].indexOf(';')!==-1?';':',';
     var cols=linhas[i].split(sep);
     var nome=(cols[0]||'').replace(/"/g,'').trim();
-    if(!nome) continue;
-    var vb=parseFloat((cols[1]||'0').replace(/"/g,'').replace(',','.').replace(/[^\d.\-]/g,''))||0;
-    var ded=parseFloat((cols[2]||'0').replace(/"/g,'').replace(',','.').replace(/[^\d.\-]/g,''))||0;
-    var res=parseFloat((cols[3]||'0').replace(/"/g,'').replace(',','.').replace(/[^\d.\-]/g,''))||0;
-    var met=parseFloat((cols[4]||'0').replace(/"/g,'').replace(',','.').replace(/[^\d.\-]/g,''))||0;
+    if(!nome||nome.length<2) continue;
+    var vb =parseFloat((cols[1]||'0').replace(/"/g,'').replace(/\./g,'').replace(',','.').replace(/[^\d.\-]/g,''))||0;
+    var ded=parseFloat((cols[2]||'0').replace(/"/g,'').replace(/\./g,'').replace(',','.').replace(/[^\d.\-]/g,''))||0;
+    var res=parseFloat((cols[3]||'0').replace(/"/g,'').replace(/\./g,'').replace(',','.').replace(/[^\d.\-]/g,''))||0;
+    var met=parseFloat((cols[4]||'0').replace(/"/g,'').replace(/\./g,'').replace(',','.').replace(/[^\d.\-]/g,''))||0;
     var sen=(cols[5]||'').replace(/"/g,'').trim();
-    if(isNaN(vb)&&isNaN(met)) continue;
     dados.push({nome:nome,vendasBrutas:vb,deducoes:ded,resultado:res,meta:met,senha:sen});
   }
   return dados;
 }
 
-// ── Extrai ID e GID da URL do Sheets ──────────────────────────────
+// ── Extrai ID e GID da URL ─────────────────────────────────────────
 function extrairSheetId(url){
   var m=url.match(/\/spreadsheets\/d\/([a-zA-Z0-9_-]+)/);
   return m?m[1]:null;
@@ -363,111 +401,126 @@ function extrairGid(url){
   return m?m[1]:'0';
 }
 
-// ── Camada 1: gviz/tq (sem CORS para sheets públicos) ─────────────
-async function fetchViaGviz(sheetId,gid){
-  var url='https://docs.google.com/spreadsheets/d/'+sheetId+'/gviz/tq?tqx=out:csv&gid='+gid+'&t='+Date.now();
-  var res=await fetch(url,{cache:'no-store'});
+// ── Fetch via gviz ─────────────────────────────────────────────────
+async function fetchViaGviz(sheetId, gid){
+  // bust de cache com timestamp + número aleatório
+  var bust = Date.now()+'-'+Math.random().toString(36).slice(2);
+  var url='https://docs.google.com/spreadsheets/d/'+sheetId+'/gviz/tq?tqx=out:csv&gid='+gid+'&cb='+bust;
+  var res=await fetch(url, {cache:'no-store', headers:{'Cache-Control':'no-cache, no-store'}});
   if(!res.ok) throw new Error('HTTP '+res.status);
   var csv=await res.text();
-  if(csv.trim().startsWith('<')) throw new Error('Planilha não está pública');
+  if(!csv||csv.trim().startsWith('<')) throw new Error('Planilha não está pública ou retornou HTML');
   var data=parseCSV(csv);
-  if(data.length===0) throw new Error('Nenhum dado encontrado');
+  if(data.length===0) throw new Error('CSV sem dados válidos');
   return data;
 }
 
-// ── Camada 2: URL CSV publicado ────────────────────────────────────
+// ── Fetch via URL CSV publicado ────────────────────────────────────
 async function fetchViaCSV(url){
-  var final=url+(url.includes('?')?'&':'?')+'t='+Date.now();
-  var res=await fetch(final,{cache:'no-store'});
+  var bust = Date.now()+'-'+Math.random().toString(36).slice(2);
+  var final=url+(url.includes('?')?'&':'?')+'cb='+bust;
+  var res=await fetch(final, {cache:'no-store', headers:{'Cache-Control':'no-cache, no-store'}});
   if(!res.ok) throw new Error('HTTP '+res.status);
   var csv=await res.text();
-  if(csv.trim().startsWith('<')) throw new Error('Retornou HTML');
+  if(!csv||csv.trim().startsWith('<')) throw new Error('Retornou HTML');
   var data=parseCSV(csv);
   if(data.length===0) throw new Error('CSV vazio');
   return data;
 }
 
-// ── Sync com fallback em 4 camadas ─────────────────────────────────
+// ══════════════════════════════════════════════════════════════════
+//  SINCRONIZAÇÃO — prioridade:
+//  1. Ao vivo via gviz  (sempre tentado primeiro)
+//  2. Ao vivo via CSV   (se gviz falhar)
+//  3. Cache local       (se Sheets inacessível)
+//  4. Hardcoded         (último recurso)
+// ══════════════════════════════════════════════════════════════════
 async function sincronizar(manual){
   var msgEl=document.getElementById('loading-msg');
-
-  if(!SHEETS_URL){
-    var cache=localStorage.getItem('usuarios_cache');
-    if(cache){
-      usuarios=JSON.parse(cache);
-      var us=localStorage.getItem('ultima_sync')||'?';
-      setSyncStatus(false,'⚠️ URL não configurada — usando cache de '+us);
-    } else {
-      usuarios=DADOS_HARDCODED;
-      setSyncStatus(false,'⚠️ URL não configurada — usando dados internos');
-    }
-    esconderLoading(); return;
-  }
-
-  if(manual) setSyncStatus(null,'⏳ Sincronizando...');
+  if(manual) setSyncStatus('loading','⏳ Buscando dados do Sheets...');
   var erros=[];
 
-  // Camada 1: gviz/tq
+  // ── Camada 1: gviz/tq ─────────────────────────────────────────
   try{
-    if(msgEl) msgEl.textContent='Conectando via API do Google Sheets...';
+    if(msgEl) msgEl.textContent='Conectando ao Google Sheets...';
     var sid=extrairSheetId(SHEETS_URL);
     var gid=extrairGid(SHEETS_URL);
     if(!sid) throw new Error('ID da planilha não encontrado na URL');
     var data=await fetchViaGviz(sid,gid);
-    usuarios=data;
-    localStorage.setItem('usuarios_cache',JSON.stringify(usuarios));
-    localStorage.setItem('ultima_sync',new Date().toLocaleString('pt-BR'));
-    setSyncStatus(true,'✅ Sincronizado — '+usuarios.length+' usuários carregados');
+    usuarios=data; fonteAtual='live';
+    salvarCache(usuarios);
+    setSyncStatus('ok','✅ Dados ao vivo — '+usuarios.length+' usuários ('+new Date().toLocaleTimeString('pt-BR')+')');
     if(manual){renderTabela();atualizarContagem();}
     esconderLoading(); return;
   }catch(e){ erros.push('gviz: '+e.message); }
 
-  // Camada 2: CSV publicado
+  // ── Camada 2: CSV publicado ────────────────────────────────────
   try{
     if(msgEl) msgEl.textContent='Tentando URL publicada...';
     var data=await fetchViaCSV(SHEETS_URL);
-    usuarios=data;
-    localStorage.setItem('usuarios_cache',JSON.stringify(usuarios));
-    localStorage.setItem('ultima_sync',new Date().toLocaleString('pt-BR'));
-    setSyncStatus(true,'✅ Sincronizado via CSV — '+usuarios.length+' usuários');
+    usuarios=data; fonteAtual='live';
+    salvarCache(usuarios);
+    setSyncStatus('ok','✅ Dados ao vivo via CSV — '+usuarios.length+' usuários');
     if(manual){renderTabela();atualizarContagem();}
     esconderLoading(); return;
   }catch(e){ erros.push('csv: '+e.message); }
 
-  // Camada 3: cache local
-  var cache=localStorage.getItem('usuarios_cache');
-  if(cache){
-    try{
-      usuarios=JSON.parse(cache);
-      var us=localStorage.getItem('ultima_sync')||'?';
-      setSyncStatus(false,'⚠️ Sheets inacessível — usando cache de '+us);
-      if(manual) alert('Não foi possível conectar ao Sheets.\nUsando cache local de: '+us+'\n\nDetalhes: '+erros.join(' | '));
-      if(manual){renderTabela();atualizarContagem();}
-      esconderLoading(); return;
-    }catch(ex){}
+  // ── Camada 3: Cache local ──────────────────────────────────────
+  var cache=lerCache();
+  if(cache&&cache.length>0){
+    usuarios=cache; fonteAtual='cache';
+    var us=localStorage.getItem('ultima_sync')||'desconhecido';
+    setSyncStatus('aviso','⚠️ Sheets inacessível — cache de '+us);
+    if(manual){
+      renderTabela();atualizarContagem();
+      alert('Não foi possível conectar ao Sheets.\nUsando cache de: '+us+'\n\nDetalhes técnicos:\n'+erros.join('\n'));
+    }
+    esconderLoading(); return;
   }
 
-  // Camada 4: dados hardcoded
-  usuarios=DADOS_HARDCODED;
-  setSyncStatus(false,'⚠️ Usando dados internos (Sheets inacessível)');
-  if(manual) alert('Não foi possível conectar. Usando dados internos.\n\nDetalhes: '+erros.join(' | '));
-  if(manual){renderTabela();atualizarContagem();}
+  // ── Camada 4: Dados hardcoded ──────────────────────────────────
+  usuarios=DADOS_HARDCODED; fonteAtual='hardcoded';
+  setSyncStatus('erro','⚠️ Usando dados internos — Sheets inacessível');
+  if(manual){
+    renderTabela();atualizarContagem();
+    alert('Não foi possível conectar ao Sheets e não há cache.\nUsando dados internos.\n\nDetalhes:\n'+erros.join('\n'));
+  }
   esconderLoading();
 }
 
-function setSyncStatus(ok,msg){
+// ── Limpar cache e forçar sincronização ───────────────────────────
+async function limparCacheESincronizar(){
+  limparCache();
+  setSyncStatus('loading','🗑️ Cache limpo — buscando dados frescos...');
+  await sincronizar(true);
+}
+
+// ── Status visual ─────────────────────────────────────────────────
+function setSyncStatus(tipo, msg){
+  // tipo: 'ok' | 'aviso' | 'erro' | 'loading'
+  var mapa={ok:'',aviso:'aviso',erro:'erro',loading:''};
+
+  // barra de login
   var bar=document.getElementById('sync-status');
   var dot=document.getElementById('sync-dot');
   var mel=document.getElementById('sync-msg');
-  if(bar){ bar.classList.remove('hidden','erro'); if(ok===false) bar.classList.add('erro'); }
-  if(dot) dot.className='sync-dot'+(ok===false?' erro':'');
-  if(mel){ mel.style.color=ok===true?'#86efac':'#fca5a5'; mel.textContent=msg; }
+  if(bar){
+    bar.classList.remove('hidden','aviso','erro');
+    if(mapa[tipo]) bar.classList.add(mapa[tipo]);
+  }
+  if(dot){ dot.className='sync-dot'+(mapa[tipo]?' '+mapa[tipo]:''); }
+  if(mel){
+    mel.style.color=tipo==='ok'?'#86efac':tipo==='aviso'?'#fbbf24':tipo==='erro'?'#fca5a5':'#94a3b8';
+    mel.textContent=msg;
+  }
+
+  // barra de admin
   var sb=document.getElementById('sheets-status-bar');
   var sd=document.getElementById('sheets-dot');
   var sm=document.getElementById('sheets-msg');
-  if(sb){ sb.classList.remove('erro'); if(ok===false) sb.classList.add('erro'); }
-  if(sd) sd.className='sync-dot'+(ok===false?' erro':'');
-  if(sm){ sm.style.color=ok===true?'#86efac':'#fca5a5'; sm.textContent=msg; }
+  if(sb){ sb.classList.remove('aviso','erro'); if(mapa[tipo]) sb.classList.add(mapa[tipo]); }
+  if(sd){ sd.className='sync-dot'+(mapa[tipo]?' '+mapa[tipo]:''); }
+  if(sm){ sm.style.color=tipo==='ok'?'#86efac':tipo==='aviso'?'#fbbf24':tipo==='erro'?'#fca5a5':'#94a3b8'; sm.textContent=msg; }
 }
 
 function esconderLoading(){
@@ -476,12 +529,13 @@ function esconderLoading(){
   mostrar('tela-login');
 }
 
-// ── Salvar URL ─────────────────────────────────────────────────────
+// ── Salvar URL e sincronizar ───────────────────────────────────────
 async function salvarEsincronizar(){
   var url=document.getElementById('inp-sheets-url').value.trim();
   if(!url){ alert('Cole a URL do Google Sheets primeiro.'); return; }
   SHEETS_URL=url;
   localStorage.setItem('sheets_url',url);
+  limparCache(); // força dados frescos ao trocar URL
   await sincronizar(true);
 }
 
@@ -491,11 +545,21 @@ function mostrar(id){
     document.getElementById(t).classList[t===id?'remove':'add']('hidden');
   });
 }
-function irLogin(){ usuarioLogado=null; document.getElementById('inp-login').value=''; document.getElementById('inp-senha').value=''; setErro(''); mostrar('tela-login'); }
+function irLogin(){
+  usuarioLogado=null;
+  document.getElementById('inp-login').value='';
+  document.getElementById('inp-senha').value='';
+  setErro('');
+  mostrar('tela-login');
+}
 function sair(){ irLogin(); }
 
 // ── Login ──────────────────────────────────────────────────────────
-function setErro(msg){ var el=document.getElementById('erro-login'); if(msg){el.textContent='⚠️ '+msg;el.classList.remove('hidden');}else el.classList.add('hidden'); }
+function setErro(msg){
+  var el=document.getElementById('erro-login');
+  if(msg){el.textContent='⚠️ '+msg;el.classList.remove('hidden');}
+  else el.classList.add('hidden');
+}
 
 function handleLogin(){
   setErro('');
@@ -519,14 +583,20 @@ function toggleAdmin(){ document.getElementById('painel-admin-login').classList.
 function handleAdmin(){
   var s=document.getElementById('inp-admin-senha').value.trim();
   var err=document.getElementById('erro-admin');
-  if(s===SENHA_ADMIN){ err.classList.add('hidden'); document.getElementById('inp-admin-senha').value=''; document.getElementById('painel-admin-login').classList.add('hidden'); abrirAdmin(); }
-  else{ err.textContent='Senha incorreta.'; err.classList.remove('hidden'); }
+  if(s===SENHA_ADMIN){
+    err.classList.add('hidden');
+    document.getElementById('inp-admin-senha').value='';
+    document.getElementById('painel-admin-login').classList.add('hidden');
+    abrirAdmin();
+  } else {
+    err.textContent='Senha incorreta.'; err.classList.remove('hidden');
+  }
 }
 document.getElementById('inp-admin-senha').addEventListener('keydown',function(e){if(e.key==='Enter')handleAdmin();});
 
 // ── Painel usuário ─────────────────────────────────────────────────
 function abrirPainel(){
-  var u=usuarioLogado,st=getStatus(u.meta);
+  var u=usuarioLogado, st=getStatus(u.meta);
   document.getElementById('painel-data').textContent=hojeFormatado();
   document.getElementById('painel-nome').textContent=u.nome;
   document.getElementById('painel-avatar').textContent=getInitials(u.nome);
@@ -549,7 +619,7 @@ function abrirPainel(){
 async function buscarVersiculoIA(nome,data){
   var key=nome+'|'+data;
   if(versiculoCache[key]) return versiculoCache[key];
-  var semente=hashSeed(nome,data),primeiro=nome.trim().split(/\s+/)[0];
+  var semente=hashSeed(nome,data), primeiro=nome.trim().split(/\s+/)[0];
   var prompt='Voce e um assistente cristao. Escolha UM versiculo biblico real para '+primeiro+' no dia '+data+'.\nUse a semente '+semente+' para variar.\nMotivador para o dia de trabalho. Explore toda a Biblia.\nNUNCA use Filipenses 4:13 ou Joao 3:16.\nResponda APENAS com JSON puro, sem markdown:\n{"texto":"versiculo completo","ref":"Livro cap:ver"}';
   try{
     var res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:300,messages:[{role:'user',content:prompt}]})});
@@ -576,16 +646,37 @@ async function carregarVersiculo(nome,data){
 function atualizarContagem(){
   document.getElementById('admin-contagem').textContent=usuarios.length+' usuários carregados';
   var us=localStorage.getItem('ultima_sync');
-  if(us) document.getElementById('ultima-sync').textContent='Última sync: '+us;
+  var ulEl=document.getElementById('ultima-sync');
+  if(ulEl) ulEl.textContent=us?'Última sync: '+us:'';
+
+  // indicador de fonte
+  var fi=document.getElementById('fonte-indicador');
+  var cacheAv=document.getElementById('cache-aviso');
+  if(fi){
+    fi.classList.remove('hidden','fonte-live','fonte-cache','fonte-fixed');
+    if(fonteAtual==='live'){
+      fi.className='fonte-badge fonte-live'; fi.textContent='🟢 Dados ao vivo';
+      if(cacheAv) cacheAv.classList.add('hidden');
+    } else if(fonteAtual==='cache'){
+      fi.className='fonte-badge fonte-cache'; fi.textContent='🟡 Cache local';
+      if(cacheAv) cacheAv.classList.remove('hidden');
+    } else {
+      fi.className='fonte-badge fonte-fixed'; fi.textContent='🔴 Dados internos';
+      if(cacheAv) cacheAv.classList.remove('hidden');
+    }
+  }
 }
+
 function abrirAdmin(){
   document.getElementById('inp-sheets-url').value=SHEETS_URL;
   var us=localStorage.getItem('ultima_sync');
-  setSyncStatus(us?true:false,us?'✅ Última sync: '+us:'⚠️ Nenhuma sincronização realizada ainda');
+  setSyncStatus(fonteAtual==='live'?'ok':fonteAtual==='cache'?'aviso':'erro',
+    us?'Última sync: '+us:'Nenhuma sincronização realizada ainda');
   atualizarContagem();
   renderTabela();
   mostrar('tela-admin');
 }
+
 function renderTabela(){
   var tbody=document.getElementById('admin-tbody');
   tbody.innerHTML='';
@@ -609,7 +700,9 @@ function renderTabela(){
 }
 
 // ── Init ───────────────────────────────────────────────────────────
-window.addEventListener('DOMContentLoaded',function(){ sincronizar(false); });
+window.addEventListener('DOMContentLoaded', function(){
+  sincronizar(false);
+});
 </script>
 </body>
 </html>
