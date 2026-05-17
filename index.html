@@ -889,14 +889,12 @@ async function carregarVendasDiarias() {
     }
 
     // ── Mapeia colunas de valor e qtd por pessoa ─────────────────────
-    // Estratégia dupla:
-    //   1) Se há sub-cabeçalho (linha 1), usa o texto para decidir se é valor ou qtd
-    //   2) Sem sub-cabeçalho (ou texto não reconhecido), usa a ordem: 1ª col = valor, 2ª = qtd
+    // Usa apenas a ORDEM das colunas por pessoa: 1ª = valor, 2ª = qtd/atendimentos
+    // O sub-cabeçalho (row1) NÃO é usado para distinguir val/qtd porque termos como
+    // "vendas emitidas" (qtd de vendas) seriam confundidos com coluna de valor monetário.
     var valColMap      = {};
     var qtdColMap      = {};
     var pessoaColCount = {};
-    var reQtd = /qtd|atend|quant|cliente|cli\b|n°|nº|num|pessoas/i;
-    var reVal = /valor|venda|emitid|r\$|total/i;
 
     for (var c = 1; c < nomesPropagados.length; c++) {
       var nomeProp  = nomesPropagados[c].toUpperCase();
@@ -908,32 +906,8 @@ async function carregarVendasDiarias() {
       if (!pessoaColCount[loginFound]) pessoaColCount[loginFound] = 0;
       pessoaColCount[loginFound]++;
 
-      // Tenta identificar pelo texto do sub-cabeçalho primeiro
-      var subLabel = row1EhSubtitulo ? String(headerRow1[c] || '').trim() : '';
-      if (subLabel && reQtd.test(subLabel)) {
-        qtdColMap[c] = loginFound;          // sub-cabeçalho indica coluna de qtd
-      } else if (subLabel && reVal.test(subLabel)) {
-        valColMap[c] = loginFound;          // sub-cabeçalho indica coluna de valor
-      } else if (pessoaColCount[loginFound] === 1) {
-        valColMap[c] = loginFound;          // sem sub-cabeçalho: 1ª col = valor
-      } else if (pessoaColCount[loginFound] === 2) {
-        qtdColMap[c] = loginFound;          // sem sub-cabeçalho: 2ª col = qtd
-      }
-    }
-
-    // Fallback: se sub-cabeçalho detectou valor mas não qtd, tenta pela ordem das colunas
-    if (Object.keys(qtdColMap).length === 0 && Object.keys(valColMap).length > 0) {
-      var pessoaColCount2 = {};
-      for (var c = 1; c < nomesPropagados.length; c++) {
-        var np2 = nomesPropagados[c].toUpperCase();
-        if (!np2) continue;
-        var pri2 = np2.split(' ')[0].normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-        var lg2  = nomeParaLogin[pri2];
-        if (!lg2) continue;
-        if (!pessoaColCount2[lg2]) pessoaColCount2[lg2] = 0;
-        pessoaColCount2[lg2]++;
-        if (pessoaColCount2[lg2] === 2) qtdColMap[c] = lg2;
-      }
+      if      (pessoaColCount[loginFound] === 1) valColMap[c] = loginFound; // 1ª coluna = valor
+      else if (pessoaColCount[loginFound] === 2) qtdColMap[c] = loginFound; // 2ª coluna = qtd
     }
 
     console.log('🔍 Cabeçalho duplo:', row1EhSubtitulo, '| Dados a partir da linha:', primeiraLinhaData);
@@ -1907,10 +1881,8 @@ function handleVendasXlsx(e) {
         nomesProp.push(ultN);
       }
 
-      // Mapeia colunas: usa sub-cabeçalho (hRow1) quando disponível, senão conta por ordem
+      // Mapeia colunas por ORDEM: 1ª coluna por pessoa = valor, 2ª = qtd/atendimentos
       var valColMap = {}, qtdColMap = {}, pesColCnt = {};
-      var reQtdX = /qtd|atend|quant|cliente|cli\b|n°|nº|num|pessoas/i;
-      var reValX = /valor|venda|emitid|r\$|total/i;
       for (var c = 1; c < nomesProp.length; c++) {
         var np = nomesProp[c].toUpperCase();
         if (!np) continue;
@@ -1919,23 +1891,8 @@ function handleVendasXlsx(e) {
         if (!lgF) continue;
         if (!pesColCnt[lgF]) pesColCnt[lgF] = 0;
         pesColCnt[lgF]++;
-        var subLX = h1EhSub ? String(hRow1[c] || '').trim() : '';
-        if (subLX && reQtdX.test(subLX))      qtdColMap[c] = lgF;
-        else if (subLX && reValX.test(subLX)) valColMap[c] = lgF;
-        else if (pesColCnt[lgF] === 1)         valColMap[c] = lgF;
-        else if (pesColCnt[lgF] === 2)         qtdColMap[c] = lgF;
-      }
-      // Fallback: sub-cabeçalho detectou valor mas não qtd
-      if (Object.keys(qtdColMap).length === 0 && Object.keys(valColMap).length > 0) {
-        var pesColCnt2 = {};
-        for (var c = 1; c < nomesProp.length; c++) {
-          var np2 = nomesProp[c].toUpperCase(); if (!np2) continue;
-          var p2  = np2.split(' ')[0].normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-          var l2  = nomeParaLogin[p2]; if (!l2) continue;
-          if (!pesColCnt2[l2]) pesColCnt2[l2] = 0;
-          pesColCnt2[l2]++;
-          if (pesColCnt2[l2] === 2) qtdColMap[c] = l2;
-        }
+        if      (pesColCnt[lgF] === 1) valColMap[c] = lgF;
+        else if (pesColCnt[lgF] === 2) qtdColMap[c] = lgF;
       }
 
       // ── Inicializa vendasDiarias ────────────────────────────────
