@@ -647,11 +647,15 @@
       </div>
       <div id="diag-output" style="font-family:monospace;font-size:11px;color:#94a3b8;white-space:pre-wrap;max-height:320px;overflow-y:auto;background:rgba(0,0,0,0.3);border-radius:8px;padding:12px;"></div>
     </div>
-    <div style="margin-bottom:14px;">
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;">
+      <button id="btn-atualizar" onclick="atualizarPlanilhas()" style="background:rgba(34,197,94,0.15);border:1px solid rgba(34,197,94,0.35);color:#4ade80;padding:10px 20px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:8px;">
+        <span id="btn-atualizar-icon">🔄</span> Atualizar Planilhas
+      </button>
       <button onclick="executarDiagnostico()" style="background:rgba(245,158,11,0.15);border:1px solid rgba(245,158,11,0.35);color:#fbbf24;padding:10px 20px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;">
         🔍 Diagnosticar planilha de vendas
       </button>
     </div>
+    <div id="status-atualizacao" style="display:none;margin-bottom:14px;padding:10px 16px;border-radius:10px;font-size:13px;font-weight:600;"></div>
 
     <div style="background:rgba(30,41,59,0.8);border:1px solid rgba(99,102,241,0.2);border-radius:20px;overflow:hidden;">
       <div style="padding:20px 24px;border-bottom:1px solid rgba(99,102,241,0.15);">
@@ -865,49 +869,49 @@ async function carregarVendasDiarias() {
     }
 
     // ── Detecta cabeçalho de 1 ou 2 linhas ──────────────────────────
-    // Planilha com células mescladas gera no CSV:
-    //   row0: ["DATA","TATIANE","","ROSEMARY","","CARLA","",...]
-    //   row1: ["","valor do dia","vendas emitidas","valor do dia",...]
-    // Quando é 1 linha só, os nomes já estão junto com os tipos.
     var headerRow0 = rows[0];
     var headerRow1 = rows[1] || [];
     var subTitulosRe = /valor|venda|emitida|qtd|atend|quantidade/i;
     var row1EhSubtitulo = headerRow1.some(function(cell) {
       return subTitulosRe.test(String(cell || '').trim());
     });
-    var headerNomes       = headerRow0;
     var primeiraLinhaData = row1EhSubtitulo ? 2 : 1;
 
-    // ── Propaga nomes mesclados (células vazias herdam o nome anterior) ─
-    // Ex: ["DATA","TATIANE","","ROSEMARY",""] → ["DATA","TATIANE","TATIANE","ROSEMARY","ROSEMARY"]
-    var nomesPropagados = [];
-    var ultimoNome = '';
-    for (var c = 0; c < headerNomes.length; c++) {
-      var celNome = (headerNomes[c] || '').trim();
-      if (celNome) ultimoNome = celNome;
-      nomesPropagados.push(ultimoNome);
+    // ── Mapeia login de cada coluna pelo primeiro token do cabeçalho ─
+    // Suporta dois formatos:
+    //   A) Célula mesclada  → ["DATA","TATIANE","","ROSEMARY",""]  (células vazias)
+    //   B) Linha única      → ["DATA FERIADO","TATIANE valor do dia","vandas emitidas",...]
+    // Em ambos: colunas cujo 1º token bate um login são "val"; a coluna seguinte que NÃO
+    // bate (ou é a 2ª ocorrência do mesmo login) é "qtd".
+    var colLogin = [];
+    for (var c = 0; c < headerRow0.length; c++) {
+      var tok = (headerRow0[c] || '').trim().toUpperCase()
+                .split(' ')[0].normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+      colLogin[c] = nomeParaLogin[tok] || null;
     }
 
-    // ── Mapeia colunas de valor e qtd por pessoa ─────────────────────
-    // Usa apenas a ORDEM das colunas por pessoa: 1ª = valor, 2ª = qtd/atendimentos
-    // O sub-cabeçalho (row1) NÃO é usado para distinguir val/qtd porque termos como
-    // "vendas emitidas" (qtd de vendas) seriam confundidos com coluna de valor monetário.
     var valColMap      = {};
     var qtdColMap      = {};
-    var pessoaColCount = {};
+    var loginCount     = {};
+    var lastValLogin   = null;
 
-    for (var c = 1; c < nomesPropagados.length; c++) {
-      var nomeProp  = nomesPropagados[c].toUpperCase();
-      if (!nomeProp) continue;
-      var primeiroH = nomeProp.split(' ')[0].normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-      var loginFound = nomeParaLogin[primeiroH];
-      if (!loginFound) continue;
-
-      if (!pessoaColCount[loginFound]) pessoaColCount[loginFound] = 0;
-      pessoaColCount[loginFound]++;
-
-      if      (pessoaColCount[loginFound] === 1) valColMap[c] = loginFound; // 1ª coluna = valor
-      else if (pessoaColCount[loginFound] === 2) qtdColMap[c] = loginFound; // 2ª coluna = qtd
+    for (var c = 1; c < colLogin.length; c++) {
+      var login = colLogin[c];
+      if (login) {
+        if (!loginCount[login]) loginCount[login] = 0;
+        loginCount[login]++;
+        if (loginCount[login] === 1) {
+          valColMap[c]  = login;   // 1ª ocorrência → valor
+          lastValLogin  = login;
+        } else if (loginCount[login] === 2) {
+          qtdColMap[c]  = login;   // 2ª ocorrência (célula mesclada) → qtd
+          lastValLogin  = null;
+        }
+      } else if (lastValLogin) {
+        // Coluna sem login logo após uma coluna de valor → qtd (formato linha única)
+        qtdColMap[c]  = lastValLogin;
+        lastValLogin  = null;
+      }
     }
 
     console.log('🔍 Cabeçalho duplo:', row1EhSubtitulo, '| Dados a partir da linha:', primeiraLinhaData);
@@ -1600,6 +1604,86 @@ async function abrirAdmin() {
   mostrar('tela-admin');
 }
 
+async function atualizarPlanilhas() {
+  var btn      = document.getElementById('btn-atualizar');
+  var icon     = document.getElementById('btn-atualizar-icon');
+  var statusEl = document.getElementById('status-atualizacao');
+
+  // Animação de carregamento
+  btn.disabled = true;
+  btn.style.opacity = '0.7';
+  icon.style.display = 'inline-block';
+  icon.style.animation = 'spin 0.8s linear infinite';
+  statusEl.style.display = 'none';
+
+  var erros = [];
+  var inicio = Date.now();
+
+  try {
+    // Recarrega colaboradores
+    var text1 = await fetchCsv(SHEET_ID, SHEET_GID_MAIN);
+    var rows1 = parseCSV(text1);
+    var novos = [];
+    for (var i = 0; i < rows1.length; i++) {
+      var r = rows1[i];
+      if (!r[0] || r[0].toUpperCase() === 'COLABORADOR') continue;
+      novos.push({
+        nome:           r[0].trim(),
+        saldoMetas:     parseBRL(r[1]),
+        venda:          parseBRL(r[2]),
+        falta:          parseBRL(r[3]),
+        metaDiaria:     parseBRL(r[4]),
+        login:          r[5] ? r[5].trim().toLowerCase() : r[0].trim().split(/\s+/)[0].toLowerCase(),
+        senha:          r[6] ? r[6].trim() : '',
+        metaQtdDia:     r[7] ? (Math.round(parseFloat(String(r[7]).replace(/,/g,'.').replace(/[^\d.]/g,''))) || 0) : 0,
+        metaTicketMeta: r[8] ? parseBRL(r[8]) : 0
+      });
+    }
+    if (novos.length > 0) { usuarios = novos; }
+    else { erros.push('Planilha de colaboradores: nenhum dado encontrado'); }
+  } catch(e) {
+    erros.push('Planilha de colaboradores: ' + (e.message || e));
+  }
+
+  try {
+    // Recarrega vendas diárias
+    await carregarVendasDiarias();
+  } catch(e) {
+    erros.push('Planilha de vendas: ' + (e.message || e));
+  }
+
+  var ms = Date.now() - inicio;
+
+  // Atualiza tabela e ranking
+  document.getElementById('admin-contagem').textContent = usuarios.length + ' usuários cadastrados';
+  renderTabela();
+  renderRankingAtendimentos();
+
+  // Restaura botão
+  btn.disabled = false;
+  btn.style.opacity = '1';
+  icon.style.animation = '';
+  icon.textContent = '🔄';
+
+  // Exibe resultado
+  statusEl.style.display = 'block';
+  if (erros.length === 0) {
+    statusEl.style.background = 'rgba(34,197,94,0.1)';
+    statusEl.style.border = '1px solid rgba(34,197,94,0.3)';
+    statusEl.style.color = '#4ade80';
+    statusEl.textContent = '✅ Planilhas atualizadas com sucesso! (' + (ms/1000).toFixed(1) + 's)';
+    icon.textContent = '✅';
+    setTimeout(function(){ icon.textContent = '🔄'; statusEl.style.display = 'none'; }, 4000);
+  } else {
+    statusEl.style.background = 'rgba(239,68,68,0.1)';
+    statusEl.style.border = '1px solid rgba(239,68,68,0.3)';
+    statusEl.style.color = '#fca5a5';
+    statusEl.textContent = '⚠️ ' + erros.join(' | ');
+    icon.textContent = '⚠️';
+    setTimeout(function(){ icon.textContent = '🔄'; }, 5000);
+  }
+}
+
 async function executarDiagnostico() {
   var painel = document.getElementById('painel-diagnostico');
   var output = document.getElementById('diag-output');
@@ -1866,33 +1950,33 @@ function handleVendasXlsx(e) {
       });
 
       // ── Detecta cabeçalho de 1 ou 2 linhas ────────────────────────
-      // Planilha com células mescladas: row0=nomes, row1=subtipos (valor/qtd)
       var hRow0 = rows[0];
       var hRow1 = rows[1] || [];
       var subRe = /valor|venda|emitida|qtd|atend|quantidade/i;
       var h1EhSub = hRow1.some(function(cell) { return subRe.test(String(cell||'').trim()); });
       var primeiraLD = h1EhSub ? 2 : 1;
 
-      // Propaga nomes mesclados (células vazias herdam o nome anterior)
-      var nomesProp = [], ultN = '';
+      // ── Mapeia login por coluna e distribui val/qtd ────────────────
+      // Suporta formato de célula mesclada E formato linha única com label completo
+      var colLoginX = [];
       for (var c = 0; c < hRow0.length; c++) {
-        var cn = String(hRow0[c] || '').trim();
-        if (cn) ultN = cn;
-        nomesProp.push(ultN);
+        var tok = String(hRow0[c] || '').trim().toUpperCase()
+                  .split(' ')[0].normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+        colLoginX[c] = nomeParaLogin[tok] || null;
       }
 
-      // Mapeia colunas por ORDEM: 1ª coluna por pessoa = valor, 2ª = qtd/atendimentos
-      var valColMap = {}, qtdColMap = {}, pesColCnt = {};
-      for (var c = 1; c < nomesProp.length; c++) {
-        var np = nomesProp[c].toUpperCase();
-        if (!np) continue;
-        var prim = np.split(' ')[0].normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-        var lgF  = nomeParaLogin[prim];
-        if (!lgF) continue;
-        if (!pesColCnt[lgF]) pesColCnt[lgF] = 0;
-        pesColCnt[lgF]++;
-        if      (pesColCnt[lgF] === 1) valColMap[c] = lgF;
-        else if (pesColCnt[lgF] === 2) qtdColMap[c] = lgF;
+      var valColMap = {}, qtdColMap = {}, loginCntX = {}, lastValLgX = null;
+      for (var c = 1; c < colLoginX.length; c++) {
+        var lgX = colLoginX[c];
+        if (lgX) {
+          if (!loginCntX[lgX]) loginCntX[lgX] = 0;
+          loginCntX[lgX]++;
+          if (loginCntX[lgX] === 1) { valColMap[c] = lgX; lastValLgX = lgX; }
+          else if (loginCntX[lgX] === 2) { qtdColMap[c] = lgX; lastValLgX = null; }
+        } else if (lastValLgX) {
+          qtdColMap[c] = lastValLgX;
+          lastValLgX = null;
+        }
       }
 
       // ── Inicializa vendasDiarias ────────────────────────────────
