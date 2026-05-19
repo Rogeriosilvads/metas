@@ -291,38 +291,6 @@
         </div>
       </div>
 
-      <!-- Simulador do Dia -->
-      <div id="calc-dia" style="margin-top:12px;background:rgba(99,102,241,0.06);border-radius:14px;padding:18px;border:1px solid rgba(99,102,241,0.18);">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
-          <span style="font-size:17px;">🧮</span>
-          <span style="color:#a5b4fc;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;">Simulador do Dia</span>
-        </div>
-        <div style="margin-bottom:12px;">
-          <label style="color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;display:block;">Quanto você vendeu até agora?</label>
-          <div style="display:flex;align-items:center;gap:8px;">
-            <span style="color:#64748b;font-size:15px;font-weight:700;white-space:nowrap;">R$</span>
-            <input id="calc-input" type="text" inputmode="decimal" placeholder="0,00"
-              style="flex:1;padding:10px 14px;background:rgba(15,23,42,0.6);border:1px solid rgba(99,102,241,0.35);border-radius:10px;color:#f1f5f9;font-size:18px;font-weight:700;outline:none;font-family:Georgia,serif;letter-spacing:0.5px;"
-              oninput="calcularFaltaAgora()" />
-          </div>
-        </div>
-        <div id="calc-resultado" style="display:none;border-radius:10px;padding:14px 16px;">
-          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
-            <div>
-              <div id="calc-label" style="color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Falta para meta</div>
-              <div id="calc-falta" style="font-size:26px;font-weight:800;letter-spacing:-1px;"></div>
-            </div>
-            <div style="text-align:right;">
-              <div style="color:#64748b;font-size:10px;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Progresso</div>
-              <div id="calc-pct" style="font-size:20px;font-weight:800;"></div>
-            </div>
-          </div>
-          <div style="margin-top:10px;background:rgba(15,23,42,0.4);border-radius:6px;height:8px;overflow:hidden;">
-            <div id="calc-barra" style="height:100%;border-radius:6px;transition:width 0.4s ease;"></div>
-          </div>
-        </div>
-      </div>
-
       <!-- Card de Atendimentos -->
       <div id="card-atendimentos" class="hidden" style="margin-top:12px;background:rgba(99,102,241,0.06);border-radius:14px;padding:18px;border:1px solid rgba(99,102,241,0.18);">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
@@ -671,6 +639,24 @@
 
     </div>
 
+    <!-- DIAGNÓSTICO -->
+    <div id="painel-diagnostico" style="display:none;background:rgba(15,23,42,0.9);border:1px solid rgba(245,158,11,0.4);border-radius:16px;padding:20px;margin-bottom:20px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+        <h3 style="color:#fbbf24;margin:0;font-size:14px;font-weight:700;">🔍 Diagnóstico — Planilha de Vendas</h3>
+        <button onclick="document.getElementById('painel-diagnostico').style.display='none'" style="background:none;border:none;color:#64748b;font-size:18px;cursor:pointer;">✕</button>
+      </div>
+      <div id="diag-output" style="font-family:monospace;font-size:11px;color:#94a3b8;white-space:pre-wrap;max-height:320px;overflow-y:auto;background:rgba(0,0,0,0.3);border-radius:8px;padding:12px;"></div>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;">
+      <button id="btn-atualizar" onclick="atualizarPlanilhas()" style="background:rgba(34,197,94,0.15);border:1px solid rgba(34,197,94,0.35);color:#4ade80;padding:10px 20px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:8px;">
+        <span id="btn-atualizar-icon">🔄</span> Atualizar Planilhas
+      </button>
+      <button onclick="executarDiagnostico()" style="background:rgba(245,158,11,0.15);border:1px solid rgba(245,158,11,0.35);color:#fbbf24;padding:10px 20px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;">
+        🔍 Diagnosticar planilha de vendas
+      </button>
+    </div>
+    <div id="status-atualizacao" style="display:none;margin-bottom:14px;padding:10px 16px;border-radius:10px;font-size:13px;font-weight:600;"></div>
+
     <div style="background:rgba(30,41,59,0.8);border:1px solid rgba(99,102,241,0.2);border-radius:20px;overflow:hidden;">
       <div style="padding:20px 24px;border-bottom:1px solid rgba(99,102,241,0.15);">
         <h3 style="color:#f1f5f9;margin:0;font-size:15px;font-weight:700;">Lista de Usuários e Credenciais</h3>
@@ -739,16 +725,26 @@ var SHEET_GID_MAIN  = "0";       // Aba principal (resumo mensal)
 var SHEET_ID_VENDAS  = "1Dp3bOOJQ__pkimuKNQrwds2l7WY381x-7XvGmRM2ogU";
 var SHEET_GID_DAILY  = "0";     // Aba gid=0 da planilha de vendas
 
-// URL CSV pública — planilha principal (usuários)
-function csvUrl(gid) {
-  // gviz/tq funciona com planilhas "Qualquer pessoa com o link" sem precisar publicar
-  return 'https://docs.google.com/spreadsheets/d/' + SHEET_ID + '/gviz/tq?tqx=out:csv&gid=' + gid;
+// Tenta duas URLs em sequência: gviz/tq (não exige publicar) e export (exige publicar como CSV)
+async function fetchCsv(sheetId, gid) {
+  var urls = [
+    'https://docs.google.com/spreadsheets/d/' + sheetId + '/gviz/tq?tqx=out:csv&gid=' + gid,
+    'https://docs.google.com/spreadsheets/d/' + sheetId + '/export?format=csv&gid=' + gid,
+  ];
+  var lastErr = '';
+  for (var i = 0; i < urls.length; i++) {
+    try {
+      var res = await fetch(urls[i]);
+      if (!res.ok) { lastErr = 'HTTP ' + res.status; continue; }
+      var text = await res.text();
+      if (text && text.trim().length > 10) return text;
+    } catch(e) { lastErr = e.message || e; }
+  }
+  throw new Error(lastErr || 'Falha ao buscar planilha');
 }
-// URL CSV pública — planilha de vendas diárias
-function csvUrlVendas(gid) {
-  // gviz/tq funciona com planilhas "Qualquer pessoa com o link" sem precisar publicar
-  return 'https://docs.google.com/spreadsheets/d/' + SHEET_ID_VENDAS + '/gviz/tq?tqx=out:csv&gid=' + gid;
-}
+
+function csvUrl(gid)       { return SHEET_ID + ':' + gid; }       // referência interna
+function csvUrlVendas(gid) { return SHEET_ID_VENDAS + ':' + gid; } // referência interna
 
 function parseBRL(v) {
   if (v === null || v === undefined || v === '') return 0;
@@ -804,9 +800,7 @@ var dadosCarregados = false;
 
 async function carregarDadosGSheets() {
   try {
-    var url = csvUrl(SHEET_GID_MAIN);
-    var res = await fetch(url);
-    var text = await res.text();
+    var text = await fetchCsv(SHEET_ID, SHEET_GID_MAIN);
     var rows = parseCSV(text);
     var novos = [];
     for (var i = 0; i < rows.length; i++) {
@@ -862,10 +856,7 @@ function carregarDadosFallback() {
 var vendasDiarias = {};
 async function carregarVendasDiarias() {
   try {
-    var url = csvUrlVendas(SHEET_GID_DAILY);
-    var res = await fetch(url);
-    if (!res.ok) throw new Error('HTTP ' + res.status);
-    var text = await res.text();
+    var text = await fetchCsv(SHEET_ID_VENDAS, SHEET_GID_DAILY);
     var rows = parseCSV(text);
     if (rows.length < 2) throw new Error('sem dados');
 
@@ -878,46 +869,48 @@ async function carregarVendasDiarias() {
     }
 
     // ── Detecta cabeçalho de 1 ou 2 linhas ──────────────────────────
-    // Planilha com células mescladas gera no CSV:
-    //   row0: ["DATA","TATIANE","","ROSEMARY","","CARLA","",...]
-    //   row1: ["","valor do dia","vendas emitidas","valor do dia",...]
-    // Quando é 1 linha só, os nomes já estão junto com os tipos.
     var headerRow0 = rows[0];
     var headerRow1 = rows[1] || [];
     var subTitulosRe = /valor|venda|emitida|qtd|atend|quantidade/i;
     var row1EhSubtitulo = headerRow1.some(function(cell) {
       return subTitulosRe.test(String(cell || '').trim());
     });
-    var headerNomes       = headerRow0;
     var primeiraLinhaData = row1EhSubtitulo ? 2 : 1;
 
-    // ── Propaga nomes mesclados (células vazias herdam o nome anterior) ─
-    // Ex: ["DATA","TATIANE","","ROSEMARY",""] → ["DATA","TATIANE","TATIANE","ROSEMARY","ROSEMARY"]
-    var nomesPropagados = [];
-    var ultimoNome = '';
-    for (var c = 0; c < headerNomes.length; c++) {
-      var celNome = (headerNomes[c] || '').trim();
-      if (celNome) ultimoNome = celNome;
-      nomesPropagados.push(ultimoNome);
+    // ── Mapeia login de cada coluna pelo primeiro token do cabeçalho ─
+    // Suporta dois formatos:
+    //   A) Célula mesclada  → ["DATA","TATIANE","","ROSEMARY",""]  (células vazias)
+    //   B) Linha única      → ["DATA FERIADO","TATIANE valor do dia","vandas emitidas",...]
+    // Em ambos: colunas cujo 1º token bate um login são "val"; a coluna seguinte que NÃO
+    // bate (ou é a 2ª ocorrência do mesmo login) é "qtd".
+    var colLogin = [];
+    for (var c = 0; c < headerRow0.length; c++) {
+      var tok = (headerRow0[c] || '').trim().toUpperCase()
+                .split(' ')[0].normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+      colLogin[c] = nomeParaLogin[tok] || null;
     }
 
-    // ── Mapeia colunas de valor e qtd por pessoa ─────────────────────
-    // Para cada pessoa: 1ª coluna = valor monetário, 2ª coluna = qtd/atendimentos
     var valColMap      = {};
     var qtdColMap      = {};
-    var pessoaColCount = {};
-    for (var c = 1; c < nomesPropagados.length; c++) {
-      var nomeProp  = nomesPropagados[c].toUpperCase();
-      if (!nomeProp) continue;
-      var primeiroH = nomeProp.split(' ')[0].normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-      var loginFound = nomeParaLogin[primeiroH];
-      if (!loginFound) continue;
-      if (!pessoaColCount[loginFound]) pessoaColCount[loginFound] = 0;
-      pessoaColCount[loginFound]++;
-      if (pessoaColCount[loginFound] === 1) {
-        valColMap[c] = loginFound;   // 1ª coluna = valor
-      } else if (pessoaColCount[loginFound] === 2) {
-        qtdColMap[c] = loginFound;   // 2ª coluna = qtd/atendimentos
+    var loginCount     = {};
+    var lastValLogin   = null;
+
+    for (var c = 1; c < colLogin.length; c++) {
+      var login = colLogin[c];
+      if (login) {
+        if (!loginCount[login]) loginCount[login] = 0;
+        loginCount[login]++;
+        if (loginCount[login] === 1) {
+          valColMap[c]  = login;   // 1ª ocorrência → valor
+          lastValLogin  = login;
+        } else if (loginCount[login] === 2) {
+          qtdColMap[c]  = login;   // 2ª ocorrência (célula mesclada) → qtd
+          lastValLogin  = null;
+        }
+      } else if (lastValLogin) {
+        // Coluna sem login logo após uma coluna de valor → qtd (formato linha única)
+        qtdColMap[c]  = lastValLogin;
+        lastValLogin  = null;
       }
     }
 
@@ -1121,7 +1114,7 @@ function irLogin() {
   mostrar('tela-login');
 }
 
-function sair() { var ci=document.getElementById("calc-input"); if(ci){ci.value="";ci.style.borderColor="";} var cr=document.getElementById("calc-resultado"); if(cr) cr.style.display="none"; irLogin(); }
+function sair() { irLogin(); }
 
 // ── Inicialização ─────────────────────────────────────────────────
 async function init() {
@@ -1494,24 +1487,74 @@ function abrirPainel() {
 }
 
 // ── Versículo ─────────────────────────────────────────────────────
+var VERSICULOS = [
+  { texto: 'O Senhor é o meu pastor e nada me faltará.', ref: 'Salmos 23:1' },
+  { texto: 'Tudo posso naquele que me fortalece.', ref: 'Filipenses 4:13' },
+  { texto: 'Porque sou eu que conheço os planos que tenho para vocês, diz o Senhor, planos de fazê-los prosperar e não de causar dano, planos de dar a vocês esperança e um futuro.', ref: 'Jeremias 29:11' },
+  { texto: 'Seja forte e corajoso! Não se apavore nem desanime, pois o Senhor, o seu Deus, estará com você por onde você andar.', ref: 'Josué 1:9' },
+  { texto: 'Não se preocupem com nada, mas em tudo, pela oração e súplicas, e com ação de graças, apresentem seus pedidos a Deus.', ref: 'Filipenses 4:6' },
+  { texto: 'Confie no Senhor de todo o seu coração e não se apoie em seu próprio entendimento.', ref: 'Provérbios 3:5' },
+  { texto: 'Mas os que esperam no Senhor renovarão as suas forças. Voarão alto como águias; correrão e não ficarão exaustos, andarão e não se cansarão.', ref: 'Isaías 40:31' },
+  { texto: 'O Senhor é a minha força e o meu escudo; o meu coração nele confia, e dele recebo ajuda.', ref: 'Salmos 28:7' },
+  { texto: 'Tudo o que você fizer, faça de todo o coração, como para o Senhor, e não para os homens.', ref: 'Colossenses 3:23' },
+  { texto: 'Posso tudo naquele que me fortalece. O Deus da paz estará com vocês.', ref: 'Filipenses 4:13,9' },
+  { texto: 'Alegrem-se na esperança, sejam pacientes na tribulação, perseverem na oração.', ref: 'Romanos 12:12' },
+  { texto: 'Porque Deus não nos deu espírito de covardia, mas de poder, de amor e de equilíbrio.', ref: '2 Timóteo 1:7' },
+  { texto: 'Entrega o teu caminho ao Senhor; confia nele, e ele tudo fará.', ref: 'Salmos 37:5' },
+  { texto: 'O Senhor abençoe você e te guarde; o Senhor faça resplandecer o seu rosto sobre você.', ref: 'Números 6:24-25' },
+  { texto: 'Pois dele, por meio dele e para ele são todas as coisas. A ele seja a glória para sempre!', ref: 'Romanos 11:36' },
+  { texto: 'Sede fortes e corajosos, não temais, nem vos atemorizeis diante deles, porque o Senhor seu Deus é quem vai convosco.', ref: 'Deuteronômio 31:6' },
+  { texto: 'A alegria do Senhor é a nossa força.', ref: 'Neemias 8:10' },
+  { texto: 'Venham a mim, todos os que estão cansados e sobrecarregados, e eu darei descanso a vocês.', ref: 'Mateus 11:28' },
+  { texto: 'Ainda que eu ande pelo vale da sombra da morte, não temerei mal algum, pois tu estás comigo.', ref: 'Salmos 23:4' },
+  { texto: 'O Senhor é bom e sua misericórdia dura para sempre; a sua fidelidade permanece por todas as gerações.', ref: 'Salmos 100:5' },
+  { texto: 'Procurai primeiro o reino de Deus e a sua justiça, e todas essas coisas vos serão acrescentadas.', ref: 'Mateus 6:33' },
+  { texto: 'E eu lhes dou a vida eterna; jamais perecerão, e ninguém as arrebatará da minha mão.', ref: 'João 10:28' },
+  { texto: 'Graças a Deus que nos dá a vitória por meio de nosso Senhor Jesus Cristo.', ref: '1 Coríntios 15:57' },
+  { texto: 'O Senhor guardará a tua saída e a tua entrada, desde agora e para sempre.', ref: 'Salmos 121:8' },
+  { texto: 'Não vos conformeis com este século, mas transformai-vos pela renovação do vosso entendimento.', ref: 'Romanos 12:2' },
+  { texto: 'Porque somos feitura sua, criados em Cristo Jesus para boas obras.', ref: 'Efésios 2:10' },
+  { texto: 'Portanto, não tema, pois estou com você; não se apavore, pois sou o seu Deus.', ref: 'Isaías 41:10' },
+  { texto: 'O coração humano planeja o seu caminho, mas o Senhor determina os seus passos.', ref: 'Provérbios 16:9' },
+  { texto: 'Portanto, não percam a coragem, pois ela será grandemente recompensada.', ref: 'Hebreus 10:35' },
+  { texto: 'Tudo tem o seu tempo determinado; há tempo para todo o propósito debaixo do céu.', ref: 'Eclesiastes 3:1' },
+  { texto: 'Aquele que habita no esconderijo do Altíssimo à sombra do Onipotente descansará.', ref: 'Salmos 91:1' },
+  { texto: 'Bem-aventurado o homem que não anda no conselho dos ímpios, mas tem prazer na lei do Senhor.', ref: 'Salmos 1:1-2' },
+  { texto: 'O SENHOR é minha luz e minha salvação; a quem temerei?', ref: 'Salmos 27:1' },
+  { texto: 'Sede, pois, imitadores de Deus, como filhos amados.', ref: 'Efésios 5:1' },
+  { texto: 'Ora, àquele que é poderoso para fazer infinitamente mais do que tudo quanto pedimos ou pensamos, segundo o poder que opera em nós.', ref: 'Efésios 3:20' },
+  { texto: 'Porque tudo o que é nascido de Deus vence o mundo; e esta é a vitória que vence o mundo: a nossa fé.', ref: '1 João 5:4' },
+  { texto: 'Mas graças a Deus, que sempre nos conduz em triunfo em Cristo.', ref: '2 Coríntios 2:14' },
+  { texto: 'Por meio d\'Aquele que nos amou, somos mais que vencedores.', ref: 'Romanos 8:37' },
+  { texto: 'Nada façais por partidarismo ou vanglória, mas por humildade, considerando cada um os outros superiores a si mesmo.', ref: 'Filipenses 2:3' },
+  { texto: 'Deleita-te também no Senhor, e ele te concederá os desejos do teu coração.', ref: 'Salmos 37:4' },
+];
+
 async function buscarVersiculoIA(nome, data) {
   var key = nome + '|' + data;
   if (versiculoCache[key]) return versiculoCache[key];
 
-  var semente  = hashSeed(nome, data);
-  var primeiro = nome.trim().split(/\s+/)[0];
+  var semente = hashSeed(nome, data);
+  var idx     = semente % VERSICULOS.length;
+  var v       = VERSICULOS[idx];
 
-  var prompt = 'Voce e um assistente cristao. Escolha UM versiculo biblico real para ' + primeiro + ' no dia ' + data + '.\n' +
-    'Use a semente ' + semente + ' para variar.\n' +
-    'O versiculo deve ser motivador e encorajador para o dia de trabalho.\n' +
-    'Explore toda a Biblia: Salmos, Proverbios, Isaias, Jeremias, Josue, Genesis, Deuteronomio, Joao, Romanos, Efesios, Filipenses, Colossenses, Hebreus, Apocalipse, etc.\n' +
-    'NUNCA use Filipenses 4:13 ou Joao 3:16.\n' +
-    'Responda APENAS com JSON puro, sem markdown:\n' +
-    '{"texto":"versiculo completo aqui","ref":"Livro capitulo:versiculo"}';
-
+  // Tenta API Anthropic (funciona no Claude.ai); se falhar usa lista local
   try {
+    var primeiro = nome.trim().split(/\s+/)[0];
+    var prompt = 'Voce e um assistente cristao. Escolha UM versiculo biblico real para ' + primeiro + ' no dia ' + data + '.\n' +
+      'Use a semente ' + semente + ' para variar.\n' +
+      'O versiculo deve ser motivador e encorajador para o dia de trabalho.\n' +
+      'Explore toda a Biblia: Salmos, Proverbios, Isaias, Jeremias, Josue, Genesis, Deuteronomio, Joao, Romanos, Efesios, Filipenses, Colossenses, Hebreus, Apocalipse, etc.\n' +
+      'NUNCA use Filipenses 4:13 ou Joao 3:16.\n' +
+      'Responda APENAS com JSON puro, sem markdown:\n' +
+      '{"texto":"versiculo completo aqui","ref":"Livro capitulo:versiculo"}';
+
+    var controller = new AbortController();
+    var timeout    = setTimeout(function(){ controller.abort(); }, 5000);
+
     var res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
+      signal: controller.signal,
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
@@ -1519,6 +1562,7 @@ async function buscarVersiculoIA(nome, data) {
         messages: [{ role: 'user', content: prompt }],
       }),
     });
+    clearTimeout(timeout);
     var json   = await res.json();
     var raw    = (json.content || []).map(function(b){ return b.text || ''; }).join('').trim();
     var parsed = JSON.parse(raw.replace(/```json|```/g,'').trim());
@@ -1526,9 +1570,12 @@ async function buscarVersiculoIA(nome, data) {
       versiculoCache[key] = parsed;
       return parsed;
     }
-  } catch(e) {}
+  } catch(e) {
+    // API indisponível (ex: GitHub Pages) — usa lista local
+  }
 
-  return { texto: 'O Senhor é o meu pastor e nada me faltará.', ref: 'Salmos 23:1' };
+  versiculoCache[key] = v;
+  return v;
 }
 
 async function carregarVersiculo(nome, data) {
@@ -1555,6 +1602,165 @@ async function abrirAdmin() {
   renderTabela();
   renderRankingAtendimentos();
   mostrar('tela-admin');
+}
+
+async function atualizarPlanilhas() {
+  var btn      = document.getElementById('btn-atualizar');
+  var icon     = document.getElementById('btn-atualizar-icon');
+  var statusEl = document.getElementById('status-atualizacao');
+
+  // Animação de carregamento
+  btn.disabled = true;
+  btn.style.opacity = '0.7';
+  icon.style.display = 'inline-block';
+  icon.style.animation = 'spin 0.8s linear infinite';
+  statusEl.style.display = 'none';
+
+  var erros = [];
+  var inicio = Date.now();
+
+  try {
+    // Recarrega colaboradores
+    var text1 = await fetchCsv(SHEET_ID, SHEET_GID_MAIN);
+    var rows1 = parseCSV(text1);
+    var novos = [];
+    for (var i = 0; i < rows1.length; i++) {
+      var r = rows1[i];
+      if (!r[0] || r[0].toUpperCase() === 'COLABORADOR') continue;
+      novos.push({
+        nome:           r[0].trim(),
+        saldoMetas:     parseBRL(r[1]),
+        venda:          parseBRL(r[2]),
+        falta:          parseBRL(r[3]),
+        metaDiaria:     parseBRL(r[4]),
+        login:          r[5] ? r[5].trim().toLowerCase() : r[0].trim().split(/\s+/)[0].toLowerCase(),
+        senha:          r[6] ? r[6].trim() : '',
+        metaQtdDia:     r[7] ? (Math.round(parseFloat(String(r[7]).replace(/,/g,'.').replace(/[^\d.]/g,''))) || 0) : 0,
+        metaTicketMeta: r[8] ? parseBRL(r[8]) : 0
+      });
+    }
+    if (novos.length > 0) { usuarios = novos; }
+    else { erros.push('Planilha de colaboradores: nenhum dado encontrado'); }
+  } catch(e) {
+    erros.push('Planilha de colaboradores: ' + (e.message || e));
+  }
+
+  try {
+    // Recarrega vendas diárias
+    await carregarVendasDiarias();
+  } catch(e) {
+    erros.push('Planilha de vendas: ' + (e.message || e));
+  }
+
+  var ms = Date.now() - inicio;
+
+  // Atualiza tabela e ranking
+  document.getElementById('admin-contagem').textContent = usuarios.length + ' usuários cadastrados';
+  renderTabela();
+  renderRankingAtendimentos();
+
+  // Restaura botão
+  btn.disabled = false;
+  btn.style.opacity = '1';
+  icon.style.animation = '';
+  icon.textContent = '🔄';
+
+  // Exibe resultado
+  statusEl.style.display = 'block';
+  if (erros.length === 0) {
+    statusEl.style.background = 'rgba(34,197,94,0.1)';
+    statusEl.style.border = '1px solid rgba(34,197,94,0.3)';
+    statusEl.style.color = '#4ade80';
+    statusEl.textContent = '✅ Planilhas atualizadas com sucesso! (' + (ms/1000).toFixed(1) + 's)';
+    icon.textContent = '✅';
+    setTimeout(function(){ icon.textContent = '🔄'; statusEl.style.display = 'none'; }, 4000);
+  } else {
+    statusEl.style.background = 'rgba(239,68,68,0.1)';
+    statusEl.style.border = '1px solid rgba(239,68,68,0.3)';
+    statusEl.style.color = '#fca5a5';
+    statusEl.textContent = '⚠️ ' + erros.join(' | ');
+    icon.textContent = '⚠️';
+    setTimeout(function(){ icon.textContent = '🔄'; }, 5000);
+  }
+}
+
+async function executarDiagnostico() {
+  var painel = document.getElementById('painel-diagnostico');
+  var output = document.getElementById('diag-output');
+  painel.style.display = 'block';
+  output.textContent = 'Buscando planilha de vendas...\n';
+
+  var urls = [
+    'https://docs.google.com/spreadsheets/d/' + SHEET_ID_VENDAS + '/gviz/tq?tqx=out:csv&gid=' + SHEET_GID_DAILY,
+    'https://docs.google.com/spreadsheets/d/' + SHEET_ID_VENDAS + '/export?format=csv&gid=' + SHEET_GID_DAILY,
+  ];
+
+  var text = null;
+  for (var i = 0; i < urls.length; i++) {
+    try {
+      output.textContent += '\nTentando URL ' + (i+1) + ':\n' + urls[i] + '\n';
+      var res = await fetch(urls[i]);
+      output.textContent += 'Status: ' + res.status + ' ' + res.statusText + '\n';
+      if (res.ok) {
+        text = await res.text();
+        output.textContent += 'Tamanho: ' + text.length + ' caracteres\n';
+        if (text.length > 10) { output.textContent += '✅ URL ' + (i+1) + ' funcionou!\n'; break; }
+      }
+    } catch(e) {
+      output.textContent += '❌ Erro: ' + (e.message || e) + '\n';
+    }
+  }
+
+  if (!text || text.length < 10) {
+    output.textContent += '\n❌ NENHUMA URL carregou dados.\nVerifique se a planilha está compartilhada como "Qualquer pessoa com o link pode ver".\nSheet ID: ' + SHEET_ID_VENDAS;
+    return;
+  }
+
+  // Mostra as primeiras 6 linhas brutas
+  var linhas = text.trim().split('\n').slice(0, 6);
+  output.textContent += '\n─── PRIMEIRAS ' + linhas.length + ' LINHAS BRUTAS ───\n';
+  linhas.forEach(function(l, i) { output.textContent += 'Linha ' + i + ': ' + l + '\n'; });
+
+  // Parse e mostra estrutura
+  var rows = parseCSV(text);
+  output.textContent += '\n─── PARSED (primeiras 4 linhas) ───\n';
+  rows.slice(0, 4).forEach(function(r, i) {
+    output.textContent += 'Row[' + i + ']: [' + r.map(function(c){ return '"' + c + '"'; }).join(', ') + ']\n';
+  });
+
+  // Tenta detectar colunas
+  var hRow0 = rows[0] || [];
+  var hRow1 = rows[1] || [];
+  var subRe = /valor|venda|emitida|qtd|atend|quantidade/i;
+  var h1EhSub = hRow1.some(function(c){ return subRe.test(String(c||'').trim()); });
+  output.textContent += '\n─── DETECÇÃO DE COLUNAS ───\n';
+  output.textContent += 'Sub-cabeçalho detectado: ' + h1EhSub + '\n';
+  output.textContent += 'Dados a partir da linha: ' + (h1EhSub ? 2 : 1) + '\n';
+  output.textContent += '\nColunas do cabeçalho (Row 0):\n';
+  hRow0.forEach(function(v, i){ if(v) output.textContent += '  [' + i + '] "' + v + '"\n'; });
+  if (h1EhSub) {
+    output.textContent += '\nSub-cabeçalho (Row 1):\n';
+    hRow1.forEach(function(v, i){ if(v) output.textContent += '  [' + i + '] "' + v + '"\n'; });
+  }
+
+  // Mapa de nomes
+  var nomeParaLogin = {};
+  usuarios.forEach(function(u) {
+    var p = u.nome.toUpperCase().split(' ')[0].normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+    nomeParaLogin[p] = u.login;
+  });
+  output.textContent += '\nNomes mapeados (login): ' + JSON.stringify(nomeParaLogin) + '\n';
+
+  // Verifica quais nomes do cabeçalho batem
+  output.textContent += '\nVerificação de match dos nomes na planilha:\n';
+  hRow0.forEach(function(v, i) {
+    if (!v || i === 0) return;
+    var prim = v.toUpperCase().split(' ')[0].normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+    var login = nomeParaLogin[prim];
+    output.textContent += '  [' + i + '] "' + v + '" → primeiro="' + prim + '" → login=' + (login || '❌ NÃO ENCONTRADO') + '\n';
+  });
+
+  output.textContent += '\n✅ Cole este resultado no chat para análise.';
 }
 
 function renderRankingAtendimentos() {
@@ -1744,33 +1950,33 @@ function handleVendasXlsx(e) {
       });
 
       // ── Detecta cabeçalho de 1 ou 2 linhas ────────────────────────
-      // Planilha com células mescladas: row0=nomes, row1=subtipos (valor/qtd)
       var hRow0 = rows[0];
       var hRow1 = rows[1] || [];
       var subRe = /valor|venda|emitida|qtd|atend|quantidade/i;
       var h1EhSub = hRow1.some(function(cell) { return subRe.test(String(cell||'').trim()); });
       var primeiraLD = h1EhSub ? 2 : 1;
 
-      // Propaga nomes mesclados (células vazias herdam o nome anterior)
-      var nomesProp = [], ultN = '';
+      // ── Mapeia login por coluna e distribui val/qtd ────────────────
+      // Suporta formato de célula mesclada E formato linha única com label completo
+      var colLoginX = [];
       for (var c = 0; c < hRow0.length; c++) {
-        var cn = String(hRow0[c] || '').trim();
-        if (cn) ultN = cn;
-        nomesProp.push(ultN);
+        var tok = String(hRow0[c] || '').trim().toUpperCase()
+                  .split(' ')[0].normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+        colLoginX[c] = nomeParaLogin[tok] || null;
       }
 
-      // Mapeia colunas: 1ª coluna por pessoa = valor, 2ª = qtd
-      var valColMap = {}, qtdColMap = {}, pesColCnt = {};
-      for (var c = 1; c < nomesProp.length; c++) {
-        var np = nomesProp[c].toUpperCase();
-        if (!np) continue;
-        var prim = np.split(' ')[0].normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-        var lgF  = nomeParaLogin[prim];
-        if (!lgF) continue;
-        if (!pesColCnt[lgF]) pesColCnt[lgF] = 0;
-        pesColCnt[lgF]++;
-        if (pesColCnt[lgF] === 1) valColMap[c] = lgF;
-        else if (pesColCnt[lgF] === 2) qtdColMap[c] = lgF;
+      var valColMap = {}, qtdColMap = {}, loginCntX = {}, lastValLgX = null;
+      for (var c = 1; c < colLoginX.length; c++) {
+        var lgX = colLoginX[c];
+        if (lgX) {
+          if (!loginCntX[lgX]) loginCntX[lgX] = 0;
+          loginCntX[lgX]++;
+          if (loginCntX[lgX] === 1) { valColMap[c] = lgX; lastValLgX = lgX; }
+          else if (loginCntX[lgX] === 2) { qtdColMap[c] = lgX; lastValLgX = null; }
+        } else if (lastValLgX) {
+          qtdColMap[c] = lastValLgX;
+          lastValLgX = null;
+        }
       }
 
       // ── Inicializa vendasDiarias ────────────────────────────────
@@ -1859,70 +2065,6 @@ function handleVendasXlsx(e) {
     e.target.value = '';
   };
   reader.readAsBinaryString(file);
-}
-
-// ── Simulador do Dia ──────────────────────────────────────────────
-function calcularFaltaAgora() {
-  var u = usuarioLogado;
-  if (!u) return;
-
-  var raw = document.getElementById('calc-input').value
-              .replace(/[Rr$\s]/g,'').replace(/\./g,'').replace(',','.');
-  var vendido = parseFloat(raw);
-  var res     = document.getElementById('calc-resultado');
-
-  if (isNaN(vendido) || raw === '') {
-    res.style.display = 'none';
-    return;
-  }
-
-  var meta   = u.metaDiaria;
-  var falta  = meta - vendido;
-  var pct    = meta > 0 ? Math.min(Math.round((vendido / meta) * 100), 100) : (vendido > 0 ? 100 : 0);
-
-  var faltaEl = document.getElementById('calc-falta');
-  var pctEl   = document.getElementById('calc-pct');
-  var barra   = document.getElementById('calc-barra');
-  var label   = document.getElementById('calc-label');
-  var input   = document.getElementById('calc-input');
-
-  res.style.display = 'block';
-
-  if (falta <= 0) {
-    var excedeu = Math.abs(falta);
-    label.textContent      = excedeu > 0 ? '🎉 Meta batida! Excedeu em' : '🎉 Meta exatamente atingida!';
-    faltaEl.textContent    = excedeu > 0 ? brl(excedeu) : '✅';
-    faltaEl.style.color    = '#4ade80';
-    pctEl.textContent      = pct + '%';
-    pctEl.style.color      = '#4ade80';
-    barra.style.width      = '100%';
-    barra.style.background = 'linear-gradient(90deg,#22c55e,#4ade80)';
-    res.style.background   = 'rgba(34,197,94,0.1)';
-    res.style.border       = '1px solid rgba(34,197,94,0.3)';
-    input.style.borderColor = 'rgba(34,197,94,0.5)';
-  } else if (pct >= 70) {
-    label.textContent      = 'Falta para a meta';
-    faltaEl.textContent    = brl(falta);
-    faltaEl.style.color    = '#fbbf24';
-    pctEl.textContent      = pct + '%';
-    pctEl.style.color      = '#fbbf24';
-    barra.style.width      = pct + '%';
-    barra.style.background = 'linear-gradient(90deg,#f59e0b,#fbbf24)';
-    res.style.background   = 'rgba(245,158,11,0.08)';
-    res.style.border       = '1px solid rgba(245,158,11,0.25)';
-    input.style.borderColor = 'rgba(245,158,11,0.5)';
-  } else {
-    label.textContent      = 'Falta para a meta';
-    faltaEl.textContent    = brl(falta);
-    faltaEl.style.color    = '#f87171';
-    pctEl.textContent      = pct + '%';
-    pctEl.style.color      = '#f87171';
-    barra.style.width      = pct + '%';
-    barra.style.background = 'linear-gradient(90deg,#ef4444,#f87171)';
-    res.style.background   = 'rgba(239,68,68,0.08)';
-    res.style.border       = '1px solid rgba(239,68,68,0.2)';
-    input.style.borderColor = 'rgba(239,68,68,0.4)';
-  }
 }
 </script>
 </body>
